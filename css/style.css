@@ -21,7 +21,7 @@
   padding: 0;
   user-select: none !important;
   -webkit-user-select: none !important;
-  -webkit-touch-callout: none !important; /* スマホ長押しメニュー禁止 */
+  -webkit-touch-callout: none !important;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
@@ -66,24 +66,24 @@ body {
 -------------------------------------------------- */
 #lobby {
   background: linear-gradient(145deg, #18221a, #101611);
-  padding: 1.8rem;
+  padding: 1.5rem;
   border-radius: 16px;
   border: 1px solid var(--panel-border);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 20px var(--gold-glow);
   text-align: center;
-  width: 90%;
+  width: 92%;
   max-width: 420px;
 }
 
 #lobby h1 {
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.6rem;
   color: var(--gold-primary);
   font-size: 1.6rem;
   text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 10px var(--gold-glow);
   letter-spacing: 2px;
 }
 
-.lobby-section { margin: 1rem 0; }
+.lobby-section { margin: 0.8rem 0; }
 
 .avatar-select-title {
   font-size: 0.82rem;
@@ -111,15 +111,16 @@ body {
   box-shadow: 0 4px 8px rgba(0,0,0,0.5);
 }
 
-.avatar-option:hover {
-  transform: scale(1.1);
-  border-color: var(--gold-light);
-}
-
 .avatar-option.selected {
   border-color: var(--gold-primary);
   box-shadow: 0 0 12px var(--gold-primary), 0 0 4px #fff;
   transform: scale(1.15);
+}
+
+.btn-deck-edit {
+  background: linear-gradient(180deg, #2a9d8f 0%, #1b6352 100%) !important;
+  border: 1px solid #48cae4 !important;
+  color: #fff !important;
 }
 
 input[type="text"] {
@@ -149,10 +150,7 @@ button {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
-button:active {
-  transform: scale(0.98);
-}
-
+button:active { transform: scale(0.98); }
 button:disabled {
   background: #3a423b;
   color: #687069;
@@ -161,11 +159,7 @@ button:disabled {
   box-shadow: none;
 }
 
-#copy-id-container {
-  margin-top: 8px;
-  display: none;
-}
-
+#copy-id-container { margin-top: 8px; display: none; }
 .copy-btn {
   background: #0d140e;
   border: 1px solid var(--gold-primary);
@@ -194,16 +188,49 @@ button:disabled {
   box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.95);
 }
 
+/* 🍃 蛍＆自然な霧キャンバス */
+#firefly-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 🎯 スタイリッシュターゲットアロー (SVG描画層) */
+.target-arrow-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 600;
+}
+
+.arrow-path {
+  stroke: #ff3344;
+  stroke-width: 3.5;
+  fill: none;
+  stroke-dasharray: 6 4;
+  filter: drop-shadow(0 0 8px #ff0000);
+  animation: arrowDashAnim 0.5s linear infinite;
+}
+
+@keyframes arrowDashAnim {
+  0% { stroke-dashoffset: 20; }
+  100% { stroke-dashoffset: 0; }
+}
+
 .area {
   padding: 2px 6px;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  z-index: 2;
 }
 
-.area.active-turn {
-  background: rgba(212, 175, 55, 0.03);
-}
+.area.active-turn { background: rgba(212, 175, 55, 0.03); }
 
 .player-info {
   display: flex;
@@ -214,20 +241,10 @@ button:disabled {
   padding: 3px 8px;
   border-radius: 6px;
   font-size: 0.75rem;
-  transition: all 0.2s ease;
 }
 
-.player-profile {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.avatar-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
+.player-profile { display: flex; align-items: center; gap: 6px; }
+.avatar-wrapper { position: relative; display: flex; align-items: center; }
 
 .player-avatar {
   width: 28px;
@@ -239,7 +256,6 @@ button:disabled {
   background: #000;
 }
 
-/* ★ アイコン横のうっすら透過エモートボタン ★ */
 .emote-trigger-btn {
   width: 22px !important;
   height: 22px !important;
@@ -257,12 +273,6 @@ button:disabled {
   justify-content: center;
 }
 
-.emote-trigger-btn:active {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-/* 💬 エモート吹き出し */
 .emote-bubble {
   position: absolute;
   left: 36px;
@@ -285,7 +295,6 @@ button:disabled {
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* 💬 アイコン近くに表示されるエモート選択ポップアップ */
 .emote-picker {
   position: absolute;
   bottom: 32px;
@@ -308,16 +317,7 @@ button:disabled {
   text-align: left;
 }
 
-.area.active-turn .player-info {
-  border-color: var(--gold-primary);
-  box-shadow: 0 0 8px var(--gold-glow);
-}
-
-.territory-zone {
-  display: flex;
-  gap: 3px;
-}
-
+.territory-zone { display: flex; gap: 3px; }
 .territory-card {
   width: 12px;
   height: 18px;
@@ -337,13 +337,14 @@ button:disabled {
   gap: 6px;
   padding: 2px 4px;
   overflow-x: auto;
+  position: relative;
 }
 
 .food-zone-wrapper {
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(42, 157, 143, 0.25);
   border-radius: 6px;
-  padding: 2px 6px;
+  padding: 3px 6px;
 }
 
 .food-zone-title {
@@ -354,27 +355,33 @@ button:disabled {
 
 .food-zone {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   overflow-x: auto;
-  min-height: 42px;
+  min-height: 38px;
   align-items: center;
+  padding: 2px 0;
 }
 
-.food-zone .card {
-  width: 32px;
-  height: 42px;
-  border-width: 1px;
-  padding: 1px;
-  justify-content: space-between;
+/* ❇️ リアルなエメラルド型ジュエル (エサ場マナ) ❇️ */
+.emerald-jewel {
+  width: 20px;
+  height: 26px;
+  background: linear-gradient(135deg, #a7f3d0 0%, #10b981 45%, #047857 100%);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  border: 1px solid #6ee7b7;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.85);
+  display: inline-block;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
-.food-zone .card .card-img { height: 20px; margin: 0; }
-.food-zone .card .card-header { font-size: 0.48rem; }
-.food-zone .card .card-cost { width: 11px; height: 11px; font-size: 0.48rem; }
 
-.food-zone .card.food-used {
-  filter: grayscale(100%) brightness(0.4);
-  opacity: 0.4;
-  border-color: #444 !important;
+.emerald-jewel.used {
+  background: linear-gradient(145deg, #374151, #111827) !important;
+  border-color: #4b5563 !important;
+  box-shadow: none !important;
+  opacity: 0.35;
+  filter: grayscale(100%);
 }
 
 #center-bar {
@@ -386,6 +393,7 @@ button:disabled {
   border-top: 1px solid var(--panel-border);
   border-bottom: 1px solid var(--panel-border);
   gap: 6px;
+  z-index: 2;
 }
 
 #log {
@@ -398,12 +406,7 @@ button:disabled {
   text-overflow: ellipsis;
 }
 
-#btn-end-turn {
-  width: auto;
-  padding: 5px 10px;
-  font-size: 0.75rem;
-}
-
+#btn-end-turn { width: auto; padding: 5px 10px; font-size: 0.75rem; }
 .btn-surrender {
   width: auto;
   padding: 5px 8px;
@@ -421,9 +424,12 @@ button:disabled {
   padding: 2px 0 16px 0;
   min-height: 108px;
   position: relative;
+  z-index: 2;
 }
 
-/* カードスタイル */
+/* --------------------------------------------------
+   カードのデザイン ＆ 💎 コスト5以上キラカード演出
+-------------------------------------------------- */
 .card {
   width: var(--card-width);
   height: var(--card-height);
@@ -440,6 +446,52 @@ button:disabled {
   background: #222;
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   overflow: hidden;
+}
+
+/* 🎯 ターゲットロックオン中のカード発光 */
+.card.targeted-lock-on {
+  border-color: #ff3344 !important;
+  box-shadow: 0 0 16px #ff0000, 0 0 4px #fff !important;
+  animation: lockOnPulse 0.8s infinite alternate ease-in-out;
+}
+
+@keyframes lockOnPulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.06); }
+}
+
+/* 💎 コスト5以上：ホログラム（キラカード）演出 */
+.card.holographic {
+  border-color: #ffd700 !important;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.7), 0 4px 12px rgba(0,0,0,0.8) !important;
+}
+
+.card.holographic::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -60%;
+  width: 220%;
+  height: 220%;
+  background: linear-gradient(
+    115deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.3) 36%,
+    rgba(255, 0, 128, 0.4) 44%,
+    rgba(0, 255, 255, 0.4) 52%,
+    rgba(255, 230, 0, 0.4) 60%,
+    transparent 80%
+  );
+  transform: rotate(15deg);
+  animation: holoGleamAnim 3.2s infinite linear;
+  pointer-events: none;
+  mix-blend-mode: color-dodge;
+  z-index: 5;
+}
+
+@keyframes holoGleamAnim {
+  0% { transform: translate(-30%, -30%) rotate(15deg); }
+  100% { transform: translate(30%, 30%) rotate(15deg); }
 }
 
 .card.red {
@@ -462,9 +514,7 @@ button:disabled {
   z-index: 90 !important;
 }
 
-.card.playable {
-  animation: playable-pulse 1.8s infinite ease-in-out;
-}
+.card.playable { animation: playable-pulse 1.8s infinite ease-in-out; }
 
 @keyframes playable-pulse {
   0% { box-shadow: 0 0 4px #2a9d8f; border-color: #2a9d8f; }
@@ -472,10 +522,7 @@ button:disabled {
   100% { box-shadow: 0 0 4px #2a9d8f; border-color: #2a9d8f; }
 }
 
-.card.exhausted {
-  opacity: 0.5;
-  filter: grayscale(70%);
-}
+.card.exhausted { opacity: 0.5; filter: grayscale(70%); }
 
 .card-header {
   display: flex;
@@ -499,7 +546,6 @@ button:disabled {
   justify-content: center;
 }
 
-/* ⚡ スキル（特殊能力）バッジ ⚡ */
 .card-ability {
   font-size: 0.48rem;
   padding: 1px 3px;
@@ -509,11 +555,11 @@ button:disabled {
   background: rgba(0,0,0,0.7);
   border: 1px solid #777;
 }
-.card-ability.taunt { background: #d97706; border-color: #fbbf24; }   /* 挑発: オレンジ */
-.card-ability.charge { background: #dc2626; border-color: #f87171; }  /* 速攻: 赤 */
-.card-ability.revenge { background: #7c3aed; border-color: #c084fc; } /* 道連れ: 紫 */
-.card-ability.drain { background: #059669; border-color: #34d399; }   /* 回復: 緑 */
-.card-ability.draw { background: #2563eb; border-color: #60a5fa; }    /* ドロー: 青 */
+.card-ability.taunt { background: #d97706; border-color: #fbbf24; }
+.card-ability.charge { background: #dc2626; border-color: #f87171; }
+.card-ability.revenge { background: #7c3aed; border-color: #c084fc; }
+.card-ability.drain { background: #059669; border-color: #34d399; }
+.card-ability.draw { background: #2563eb; border-color: #60a5fa; }
 
 .card-element { font-size: 0.58rem; }
 
@@ -558,11 +604,57 @@ button:disabled {
 .card-atk { color: #ffe66d; text-shadow: 0 1px 2px #000; }
 .card-hp { color: #2a9d8f; text-shadow: 0 1px 2px #000; }
 
-/* 被弾＆破片アニメーション */
-.card-hit-shake {
-  animation: hitShakeAnim 0.35s ease-in-out !important;
+/* 💥 CRITICAL ポップアップ */
+.critical-popup {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  color: #ffe600;
+  font-family: 'Cinzel', 'Georgia', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 900;
+  text-shadow: 0 0 8px #ff0000, 0 0 18px #ffea00, 0 2px 4px #000;
+  z-index: 10001;
+  pointer-events: none;
+  animation: criticalPopupAnim 0.9s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
 }
 
+@keyframes criticalPopupAnim {
+  0% { opacity: 0; transform: translate(-50%, 0%) scale(0.3) rotate(-10deg); }
+  20% { opacity: 1; transform: translate(-50%, -60%) scale(1.5) rotate(0deg); }
+  70% { opacity: 1; transform: translate(-50%, -80%) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -130%) scale(0.8); }
+}
+
+.screen-impact-shake {
+  animation: impactShakeAnim 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) !important;
+}
+
+@keyframes impactShakeAnim {
+  10%, 90% { transform: translate3d(-2px, 2px, 0); }
+  20%, 80% { transform: translate3d(4px, -3px, 0); }
+  30%, 50%, 70% { transform: translate3d(-6px, 5px, 0); filter: brightness(1.8) drop-shadow(0 0 15px #ffd700); }
+  40%, 60% { transform: translate3d(6px, -4px, 0); }
+}
+
+.summon-shockwave {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 4px solid var(--gold-primary);
+  box-shadow: 0 0 30px var(--gold-glow), inset 0 0 20px #ff2a2a;
+  z-index: 900;
+  pointer-events: none;
+  animation: shockwaveAnim 0.65s ease-out forwards;
+}
+
+@keyframes shockwaveAnim {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; border-width: 8px; }
+  100% { transform: translate(-50%, -50%) scale(9); opacity: 0; border-width: 1px; }
+}
+
+.card-hit-shake { animation: hitShakeAnim 0.35s ease-in-out !important; }
 @keyframes hitShakeAnim {
   0% { transform: scale(1) translate(0, 0); filter: brightness(2.5) drop-shadow(0 0 12px #ff0000); }
   20% { transform: scale(1.1) translate(-7px, 4px) rotate(-5deg); }
@@ -576,10 +668,10 @@ button:disabled {
   position: fixed;
   transform: translate(-50%, -50%);
   color: #ff2a2a;
-  font-family: 'Cinzel', 'Georgia', sans-serif;
+  font-family: 'Cinzel', sans-serif;
   font-size: 1.6rem;
   font-weight: 900;
-  text-shadow: 0 0 6px #000, 0 0 14px #ff0000, 0 0 20px #ffea00;
+  text-shadow: 0 0 6px #000, 0 0 14px #ff0000;
   z-index: 10000;
   pointer-events: none;
   animation: damagePopupAnim 0.85s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
@@ -619,7 +711,6 @@ button:disabled {
   100% { opacity: 0; filter: brightness(0.1) blur(6px); transform: scale(0.3) translateY(25px) rotate(-10deg); }
 }
 
-/* 🔍 カード拡大プレビューモーダル */
 .preview-modal {
   position: fixed;
   inset: 0;
@@ -663,7 +754,84 @@ button:disabled {
   line-height: 1.3;
 }
 
-/* モーダル群 */
+.deck-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 950;
+}
+
+.deck-modal-content {
+  background: linear-gradient(145deg, #18241b, #0c120d);
+  border: 2px solid var(--gold-primary);
+  border-radius: 16px;
+  padding: 1rem;
+  width: 95%;
+  max-width: 480px;
+  height: 90vh;
+  height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+}
+
+.deck-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.deck-header h2 { font-size: 1.1rem; color: var(--gold-primary); }
+.deck-counter { font-size: 0.85rem; font-weight: bold; color: var(--gold-light); }
+
+.deck-section-title {
+  font-size: 0.72rem;
+  color: var(--accent-green);
+  font-weight: bold;
+  margin: 4px 0 2px 0;
+}
+
+.deck-grid {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  min-height: 102px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  align-items: center;
+}
+
+.pool-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+  gap: 6px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 180px;
+  align-content: start;
+}
+
+.deck-grid .card {
+  transform: scale(0.9) !important;
+  margin: -4px -3px;
+}
+
+.deck-footer-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
 #action-modal, #result-modal {
   position: fixed;
   inset: 0;

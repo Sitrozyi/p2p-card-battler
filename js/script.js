@@ -51,7 +51,6 @@ window.toggleEmotePicker = function(e) {
   if (picker) picker.classList.toggle('hidden');
 };
 
-// 画面のどこかをタップしたらエモートピッカーを閉じる
 document.addEventListener('click', () => {
   const picker = document.getElementById('emote-picker');
   if (picker) picker.classList.add('hidden');
@@ -78,14 +77,42 @@ function showEmoteBubble(elementId, text) {
   }, 2200);
 }
 
-// 💥 演出用エフェクト（ダメージ＆振動） 💥
-function showDamageEffect(targetEl, text) {
+// 🚩 ターン開始バナー演出 🚩
+function showTurnBanner(isMyTurn) {
+  const banner = document.getElementById('turn-banner');
+  const textEl = document.getElementById('turn-banner-text');
+  if (!banner || !textEl) return;
+
+  textEl.innerText = isMyTurn ? "次はあなたの番です" : "相手の番です";
+  banner.classList.remove('hidden');
+
+  setTimeout(() => {
+    banner.classList.add('hidden');
+  }, 1350);
+}
+
+// 💥 演出用エフェクト（ダメージ＆振動＆CRITICAL） 💥
+function showDamageEffect(targetEl, text, isCritical = false) {
   if (!targetEl) return;
 
   targetEl.classList.add('card-hit-shake');
   setTimeout(() => targetEl.classList.remove('card-hit-shake'), 380);
 
   const rect = targetEl.getBoundingClientRect();
+
+  if (isCritical) {
+    const critEl = document.createElement('div');
+    critEl.className = 'critical-popup';
+    critEl.innerText = "⚡ CRITICAL 2x!!";
+    critEl.style.left = (rect.left + rect.width / 2) + 'px';
+    critEl.style.top = (rect.top - 15) + 'px';
+    document.body.appendChild(critEl);
+
+    setTimeout(() => {
+      if (critEl.parentNode) critEl.parentNode.removeChild(critEl);
+    }, 900);
+  }
+
   const dmgEl = document.createElement('div');
   dmgEl.className = 'damage-popup';
   dmgEl.innerText = text;
@@ -100,7 +127,30 @@ function showDamageEffect(targetEl, text) {
   }, 850);
 }
 
-// 💥 演出用エフェクト（砕け散る破片） 💥
+// 💥 大型カード召喚インパクト 💥
+function showSummonImpactEffect(targetEl) {
+  if (!targetEl) return;
+
+  const board = document.getElementById('game-board');
+  if (board) {
+    board.classList.add('screen-impact-shake');
+    setTimeout(() => board.classList.remove('screen-impact-shake'), 450);
+  }
+
+  const rect = targetEl.getBoundingClientRect();
+  const wave = document.createElement('div');
+  wave.className = 'summon-shockwave';
+  wave.style.left = (rect.left + rect.width / 2) + 'px';
+  wave.style.top = (rect.top + rect.height / 2) + 'px';
+
+  document.body.appendChild(wave);
+
+  setTimeout(() => {
+    if (wave.parentNode) wave.parentNode.removeChild(wave);
+  }, 650);
+}
+
+// 💥 破片砕け散る演出 💥
 function shatterCard(targetEl) {
   if (!targetEl) return;
 
@@ -138,18 +188,185 @@ function shatterCard(targetEl) {
   }
 }
 
-// 🔍 スマホ完全対応：長押し拡大プレビュー＆タップ切り分け処理 🔍
+// 🍃 蛍の光 (10個) ＆ 漂う森の霧 (フォグ) アニメーション 🍃
+let fireflies = [];
+let fogTime = 0;
+
+function initFireflies() {
+  const canvas = document.getElementById('firefly-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = canvas.clientWidth || window.innerWidth;
+    canvas.height = canvas.clientHeight || window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  fireflies = [];
+  const count = 10;
+  for (let i = 0; i < count; i++) {
+    fireflies.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      radius: Math.random() * 2 + 1,
+      alpha: Math.random() * 0.4 + 0.1,
+      speedAlpha: Math.random() * 0.008 + 0.003,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3 - 0.1,
+      color: Math.random() > 0.5 ? '#e2d8b5' : '#10b981'
+    });
+  }
+
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    fogTime += 0.005;
+
+    const gradX = canvas.width / 2 + Math.sin(fogTime) * 120;
+    const gradY = canvas.height / 2 + Math.cos(fogTime * 0.8) * 80;
+    const fogGrad = ctx.createRadialGradient(gradX, gradY, 10, gradX, gradY, canvas.width * 0.7);
+    fogGrad.addColorStop(0, 'rgba(16, 185, 129, 0.06)');
+    fogGrad.addColorStop(0.5, 'rgba(42, 157, 143, 0.03)');
+    fogGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+    ctx.fillStyle = fogGrad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    fireflies.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.alpha += p.speedAlpha;
+
+      if (p.alpha <= 0.05 || p.alpha >= 0.5) p.speedAlpha *= -1;
+
+      if (p.x < 0) p.x = canvas.width;
+      if (p.x > canvas.width) p.x = 0;
+      if (p.y < 0) p.y = canvas.height;
+      if (p.y > canvas.height) p.y = canvas.height;
+
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(0.5, p.alpha));
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = p.color;
+      ctx.fill();
+      ctx.restore();
+    });
+
+    requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// 🎯 スタイリッシュターゲットアロー (SVG描画 ＆ 通信同期) 🎯
+let targetedDefenderCardId = null; // ローカルのターゲットID
+let remoteLock = { attackerId: null, defenderId: null }; // 相手からのターゲットロック情報
+
+function drawTargetArrow(attackerEl, targetEl) {
+  const pathEl = document.getElementById('arrow-path');
+  const svgEl = document.getElementById('target-arrow-svg');
+  if (!pathEl || !svgEl || !attackerEl || !targetEl) return;
+
+  const svgRect = svgEl.getBoundingClientRect();
+  const rect1 = attackerEl.getBoundingClientRect();
+  const rect2 = targetEl.getBoundingClientRect();
+
+  const x1 = rect1.left + rect1.width / 2 - svgRect.left;
+  const y1 = rect1.top + rect1.height / 2 - svgRect.top;
+  const x2 = rect2.left + rect2.width / 2 - svgRect.left;
+  const y2 = rect2.top + rect2.height / 2 - svgRect.top;
+
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const cx = (x1 + x2) / 2 - dy * 0.25;
+  const cy = (y1 + y2) / 2 + dx * 0.25;
+
+  pathEl.setAttribute('d', `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`);
+  pathEl.classList.remove('hidden');
+}
+
+function clearTargetArrowVisualOnly() {
+  const pathEl = document.getElementById('arrow-path');
+  if (pathEl) {
+    pathEl.setAttribute('d', '');
+    pathEl.classList.add('hidden');
+  }
+  document.querySelectorAll('.targeted-lock-on').forEach(el => el.classList.remove('targeted-lock-on'));
+}
+
+function clearTargetArrow() {
+  targetedDefenderCardId = null;
+  remoteLock = { attackerId: null, defenderId: null };
+  clearTargetArrowVisualOnly();
+
+  if (conn && conn.open) {
+    conn.send({ 
+      type: 'TARGET_LOCK', 
+      attackerId: null, 
+      defenderId: null 
+    });
+  }
+}
+
+function updateTargetArrow() {
+  // 自分がターゲット選択中の場合
+  if (selectedAttackerCardId && targetedDefenderCardId) {
+    const attackerEl = document.querySelector(`.card[data-card-id="${selectedAttackerCardId}"]`);
+    const defenderEl = (targetedDefenderCardId === 'HERO')
+      ? document.getElementById('opponent-info-box')
+      : document.querySelector(`.card[data-card-id="${targetedDefenderCardId}"]`);
+
+    document.querySelectorAll('.targeted-lock-on').forEach(el => el.classList.remove('targeted-lock-on'));
+
+    if (attackerEl && defenderEl) {
+      defenderEl.classList.add('targeted-lock-on');
+      drawTargetArrow(attackerEl, defenderEl);
+    } else {
+      clearTargetArrowVisualOnly();
+    }
+  } 
+  // 相手がターゲット選択中の場合 (受信側)
+  else if (remoteLock.attackerId && remoteLock.defenderId) {
+    const attackerEl = document.querySelector(`.card[data-card-id="${remoteLock.attackerId}"]`);
+    let defenderEl = null;
+
+    if (remoteLock.defenderId === 'HERO') {
+      defenderEl = document.querySelector('#my-area .player-info');
+    } else {
+      defenderEl = document.querySelector(`.card[data-card-id="${remoteLock.defenderId}"]`);
+    }
+
+    document.querySelectorAll('.targeted-lock-on').forEach(el => el.classList.remove('targeted-lock-on'));
+
+    if (attackerEl && defenderEl) {
+      defenderEl.classList.add('targeted-lock-on');
+      drawTargetArrow(attackerEl, defenderEl);
+    } else {
+      clearTargetArrowVisualOnly();
+    }
+  } 
+  else {
+    clearTargetArrowVisualOnly();
+  }
+}
+
+window.addEventListener('resize', updateTargetArrow);
+
+// 🔍 スマホ対応カードタッチ・長押し 🔍
 function attachCardInteraction(cardEl, cardData, clickHandler) {
   let longPressTimer = null;
   let isLongPress = false;
 
-  const startPress = (e) => {
+  const startPress = () => {
     isLongPress = false;
     longPressTimer = setTimeout(() => {
       isLongPress = true;
       openCardPreview(cardData);
-      if (navigator.vibrate) navigator.vibrate(40); // 長押し完了バイブ
-    }, 350); // 0.35秒ホールドでプレビュー
+      if (navigator.vibrate) navigator.vibrate(40);
+    }, 350);
   };
 
   const cancelPress = () => {
@@ -159,7 +376,6 @@ function attachCardInteraction(cardEl, cardData, clickHandler) {
     }
   };
 
-  // タッチイベント
   cardEl.addEventListener('touchstart', startPress, { passive: true });
   cardEl.addEventListener('touchend', (e) => {
     cancelPress();
@@ -170,12 +386,10 @@ function attachCardInteraction(cardEl, cardData, clickHandler) {
   });
   cardEl.addEventListener('touchmove', cancelPress);
 
-  // マウスイベント
   cardEl.addEventListener('mousedown', startPress);
   cardEl.addEventListener('mouseup', cancelPress);
   cardEl.addEventListener('mouseleave', cancelPress);
 
-  // 通常タップ・クリック処理（長押しでなかった場合のみ実行）
   cardEl.onclick = (e) => {
     e.stopPropagation();
     if (isLongPress) {
@@ -214,7 +428,7 @@ window.closeCardPreview = function() {
   if (modal) modal.classList.add('hidden');
 };
 
-// --- icon/ フォルダ内の自作画像定義 ---
+// --- アバターデータ ---
 const AVATAR_PRESETS = [
   { id: 'icon1', name: 'アイコン1', src: 'icon/1.png' },
   { id: 'icon2', name: 'アイコン2', src: 'icon/2.png' },
@@ -281,27 +495,126 @@ function triggerSE(type) {
   }
 }
 
-// --- カード定義データ (特殊能力 ability) ---
+// --- マスターカードデータ ---
 const CARD_DATA = [
-  { name: "アリ",       cost: 1, atk: 400,  hp: 300,  element: "red",   ability: "draw",    image: "images/ant.jpg" },
-  { name: "クワガタ",   cost: 2, atk: 500,  hp: 500,  element: "red",   ability: "taunt",   image: "images/kuwagata.jpg" },
-  { name: "カブトムシ", cost: 3, atk: 600,  hp: 700,  element: "red",   ability: "taunt",   image: "images/kabuto.jpg" },
+  { name: "アリ",       cost: 1, atk: 400,  hp: 300,  element: "red",   ability: "",    image: "images/ant.jpg" },
+  { name: "クワガタ",   cost: 2, atk: 500,  hp: 500,  element: "red",   ability: "",   image: "images/kuwagata.jpg" },
+  { name: "カブトムシ", cost: 3, atk: 600,  hp: 800,  element: "red",   ability: "taunt",   image: "images/kabuto.jpg" },
   { name: "スズメバチ", cost: 4, atk: 800,  hp: 900,  element: "red",   ability: "charge",  image: "images/suzu.jpg" },
-  { name: "ムカデ",     cost: 5, atk: 1200, hp: 1000, element: "red",   ability: "revenge", image: "images/omu.jpg" },
+  { name: "ムカデ",     cost: 5, atk: 1500, hp: 1000, element: "red",   ability: "charge", image: "images/omu.jpg" },
 
-  { name: "アメンボ",   cost: 1, atk: 200,  hp: 500,  element: "blue",  ability: "draw",    image: "images/amen.jpg" },
-  { name: "ゲンゴロウ", cost: 2, atk: 400,  hp: 700,  element: "blue",  ability: "drain",   image: "images/gengo.jpg" },
-  { name: "タガメ",     cost: 3, atk: 600,  hp: 1000, element: "blue",  ability: "taunt",   image: "images/tagame.png" },
-  { name: "ミズカマキリ",cost: 4, atk: 900,  hp: 1500, element: "blue",  ability: "charge",  image: "images/mizu.png" },
-  { name: "タランチュラ",cost: 5, atk: 1000, hp: 1800, element: "blue",  ability: "revenge", image: "images/tara.jpg" },
+  { name: "アメンボ",   cost: 1, atk: 200,  hp: 500,  element: "blue",  ability: "",    image: "images/amen.jpg" },
+  { name: "ゲンゴロウ", cost: 2, atk: 400,  hp: 700,  element: "blue",  ability: "",   image: "images/gengo.jpg" },
+  { name: "タガメ",     cost: 3, atk: 600,  hp: 1000, element: "blue",  ability: "",   image: "images/tagame.png" },
+  { name: "ミズカマキリ",cost: 4, atk: 700,  hp: 1300, element: "blue",  ability: "charge",  image: "images/mizu.png" },
+  { name: "タランチュラ",cost: 5, atk: 1000, hp: 1800, element: "blue",  ability: "taunt", image: "images/tara.jpg" },
 
   { name: "バッタ",     cost: 1, atk: 300,  hp: 400,  element: "green", ability: "draw",    image: "images/bat.png" },
-  { name: "キリギリス", cost: 2, atk: 500,  hp: 500,  element: "green", ability: "drain",   image: "images/ki.png" },
-  { name: "カマキリ",   cost: 3, atk: 800,  hp: 800,  element: "green", ability: "charge",  image: "images/kama.png" },
-  { name: "オニヤンマ", cost: 4, atk: 1000, hp: 1000, element: "green", ability: "revenge", image: "images/oni.png" },
-  { name: "カミキリムシ", cost: 5, atk: 1200, hp: 1200, element: "green", ability: "taunt",   image: "images/kami.jpg" },
+  { name: "キリギリス", cost: 2, atk: 300,  hp: 600,  element: "green", ability: "",   image: "images/ki.png" },
+  { name: "カマキリ",   cost: 3, atk: 600,  hp: 800,  element: "green", ability: "charge",  image: "images/kama.png" },
+  { name: "オニヤンマ", cost: 4, atk: 1000, hp: 1000, element: "green", ability: "", image: "images/oni.png" },
+  { name: "カミキリムシ", cost: 5, atk: 1200, hp: 1200, element: "green", ability: "revenge",   image: "images/kami.jpg" },
 ];
 
+let myCustomDeckNames = [];
+
+function loadCustomDeck() {
+  const saved = localStorage.getItem('bug_game_custom_deck');
+  if (saved) {
+    try {
+      myCustomDeckNames = JSON.parse(saved);
+    } catch(e) {}
+  }
+
+  if (!myCustomDeckNames || myCustomDeckNames.length !== 20) {
+    resetDeckToDefaultData();
+  }
+  updateLobbyDeckCount();
+}
+
+function resetDeckToDefaultData() {
+  myCustomDeckNames = [];
+  for (let i = 0; i < 20; i++) {
+    myCustomDeckNames.push(CARD_DATA[i % CARD_DATA.length].name);
+  }
+  saveCustomDeck();
+}
+
+function saveCustomDeck() {
+  localStorage.setItem('bug_game_custom_deck', JSON.stringify(myCustomDeckNames));
+  updateLobbyDeckCount();
+}
+
+function updateLobbyDeckCount() {
+  const el = document.getElementById('lobby-deck-count');
+  if (el) el.innerText = myCustomDeckNames.length;
+}
+
+window.openDeckBuilder = function() {
+  loadCustomDeck();
+  renderDeckBuilder();
+  const modal = document.getElementById('deck-builder-modal');
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.saveAndCloseDeckBuilder = function() {
+  if (myCustomDeckNames.length !== 20) {
+    alert("デッキはちょうど20枚にしてください！（現在 " + myCustomDeckNames.length + " 枚）");
+    return;
+  }
+  saveCustomDeck();
+  const modal = document.getElementById('deck-builder-modal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.resetDeckToDefault = function() {
+  if (confirm("標準の初期デッキに戻しますか？")) {
+    resetDeckToDefaultData();
+    renderDeckBuilder();
+  }
+};
+
+function renderDeckBuilder() {
+  const currentGrid = document.getElementById('current-deck-grid');
+  const poolGrid = document.getElementById('card-pool-grid');
+  const countEl = document.getElementById('deck-count-num');
+
+  if (!currentGrid || !poolGrid) return;
+  if (countEl) countEl.innerText = myCustomDeckNames.length;
+
+  currentGrid.innerHTML = '';
+  myCustomDeckNames.forEach((cardName, idx) => {
+    const cardData = CARD_DATA.find(c => c.name === cardName) || CARD_DATA[0];
+    let cardEl = createCardEl(cardData, false);
+    cardEl.onclick = () => {
+      myCustomDeckNames.splice(idx, 1);
+      renderDeckBuilder();
+    };
+    currentGrid.appendChild(cardEl);
+  });
+
+  poolGrid.innerHTML = '';
+  CARD_DATA.forEach(cardData => {
+    let cardEl = createCardEl(cardData, false);
+    const countInDeck = myCustomDeckNames.filter(n => n === cardData.name).length;
+
+    cardEl.onclick = () => {
+      if (myCustomDeckNames.length >= 20) {
+        alert("デッキは20枚が上限です！");
+        return;
+      }
+      if (countInDeck >= 3) {
+        alert("同じカードは3枚までしか入れられません！");
+        return;
+      }
+      myCustomDeckNames.push(cardData.name);
+      renderDeckBuilder();
+    };
+    poolGrid.appendChild(cardEl);
+  });
+}
+
+// --- 通信・ゲーム状態 ---
 let peer = null, conn = null;
 let isHost = false;
 let myRole = '';
@@ -347,6 +660,7 @@ function initAvatarSelection() {
 // 部屋作成関数
 window.createRoom = function() {
   playBGM();
+  loadCustomDeck();
   const btnCreate = document.getElementById('btn-create');
   const statusMsg = document.getElementById('status-msg');
   const copyIdBtn = document.getElementById('host-id-btn');
@@ -368,10 +682,6 @@ window.createRoom = function() {
   if (typeof Peer === 'undefined') {
     alert("PeerJSが読み込まれていません。ページを再読み込みしてください。");
     if (btnCreate) btnCreate.disabled = false;
-    if (statusMsg) {
-      statusMsg.style.color = "#e63946";
-      statusMsg.innerText = "エラー: PeerJS未読み込み";
-    }
     return;
   }
 
@@ -426,16 +736,13 @@ window.createRoom = function() {
   peer.on('error', err => {
     console.error("Peer Error:", err);
     if (btnCreate) btnCreate.disabled = false;
-    if (statusMsg) {
-      statusMsg.style.color = "#e63946";
-      statusMsg.innerText = "通信エラー: " + (err.type === 'unavailable-id' ? 'ID重複。もう一度作成を押してください。' : (err.type || err));
-    }
   });
 };
 
 // 部屋参加関数
 window.joinRoom = function() {
   playBGM();
+  loadCustomDeck();
   const btnJoin = document.getElementById('btn-join');
   const joinInput = document.getElementById('join-id');
   const statusMsg = document.getElementById('status-msg');
@@ -490,10 +797,6 @@ window.joinRoom = function() {
   peer.on('error', err => {
     console.error("Peer Error:", err);
     if (btnJoin) btnJoin.disabled = false;
-    if (statusMsg) {
-      statusMsg.style.color = "#e63946";
-      statusMsg.innerText = "接続エラー: 部屋IDが存在しないか通信に失敗しました。";
-    }
   });
 };
 
@@ -507,14 +810,15 @@ function setupConnection() {
     document.getElementById('lobby').classList.add('hidden');
     document.getElementById('game-board').classList.remove('hidden');
 
+    initFireflies();
+
     if (isHost) {
       G.players.host.avatar = AVATAR_PRESETS[selectedAvatarIndex].src;
-      initGame();
     } else {
       conn.send({ 
-        type: 'SET_AVATAR', 
-        role: 'guest', 
-        avatar: AVATAR_PRESETS[selectedAvatarIndex].src 
+        type: 'SET_GUEST_INFO', 
+        avatar: AVATAR_PRESETS[selectedAvatarIndex].src,
+        deckNames: myCustomDeckNames
       });
     }
   });
@@ -544,21 +848,33 @@ function sendAction(action, payload) {
   }
 }
 
+let lastRenderTurn = null;
+
 function handleNetworkData(data) {
   if (data.type === 'SYNC') {
     G = data.state;
+
+    if (lastRenderTurn !== G.turn && !G.gameOver) {
+      showTurnBanner(G.turn === myRole);
+      lastRenderTurn = G.turn;
+    }
+
     render();
   } else if (data.type === 'ACTION' && isHost) {
     processAction(data.role, data.action, data.payload);
-  } else if (data.type === 'SET_AVATAR' && isHost) {
-    G.players[data.role].avatar = data.avatar;
-    sendState();
+  } else if (data.type === 'SET_GUEST_INFO' && isHost) {
+    G.players.guest.avatar = data.avatar;
+    initGame(data.deckNames);
   } else if (data.type === 'SE') {
     playSE(data.se);
   } else if (data.type === 'EMOTE') {
     showEmoteBubble('opp-emote-bubble', data.text);
+  } else if (data.type === 'TARGET_LOCK') {
+    handleRemoteTargetLock(data.attackerId, data.defenderId);
   } else if (data.type === 'EFFECT_BUG') {
-    playAttackBugEffect(data.defenderId, data.damageText, data.isDestroyed);
+    playAttackBugEffect(data.defenderId, data.damageText, data.isDestroyed, data.isCritical);
+  } else if (data.type === 'EFFECT_SUMMON_IMPACT') {
+    playSummonImpactByCardId(data.cardId);
   } else if (data.type === 'EFFECT_HERO') {
     const oppInfoBox = document.getElementById('opponent-info-box');
     if (oppInfoBox) showDamageEffect(oppInfoBox, 'ライフ-1!');
@@ -568,25 +884,34 @@ function handleNetworkData(data) {
   }
 }
 
-function createDeck() {
+// 🎯 受信したターゲットアローを相手視点にリアルタイム変換して描画 🎯
+function handleRemoteTargetLock(attackerId, defenderId) {
+  remoteLock.attackerId = attackerId;
+  remoteLock.defenderId = defenderId;
+  updateTargetArrow();
+}
+
+function createDeckFromNames(nameList, role) {
   let deck = [];
   let idCounter = 1;
-  for (let i = 0; i < 20; i++) {
-    let base = CARD_DATA[i % CARD_DATA.length];
+
+  nameList.forEach(name => {
+    let base = CARD_DATA.find(c => c.name === name) || CARD_DATA[0];
     deck.push({ 
       ...base, 
       maxHp: base.hp, 
       ability: base.ability || null,
-      id: myRole + '_' + (idCounter++) + '_' + Math.random().toString(36).substr(2, 4), 
+      id: role + '_' + (idCounter++) + '_' + Math.random().toString(36).substr(2, 4), 
       exhausted: false 
     });
-  }
+  });
+
   return deck.sort(() => Math.random() - 0.5);
 }
 
-function initGame() {
-  let hostDeck = createDeck();
-  let guestDeck = createDeck();
+function initGame(guestDeckNames = null) {
+  let hostDeck = createDeckFromNames(myCustomDeckNames, 'host');
+  let guestDeck = createDeckFromNames(guestDeckNames || myCustomDeckNames, 'guest');
 
   G.players.host.territory = hostDeck.splice(0, 6);
   G.players.host.hand = hostDeck.splice(0, 4);
@@ -611,6 +936,7 @@ function initGame() {
 function startTurn(role) {
   G.turn = role;
   G.foodSetThisTurn = false;
+  clearTargetArrow();
   let p = G.players[role];
   
   if (p.deck.length > 0) {
@@ -623,11 +949,14 @@ function startTurn(role) {
     c.hp = c.maxHp; 
   });
 
+  showTurnBanner(role === myRole);
+  lastRenderTurn = role;
+
   log(`${role === myRole ? 'あなた' : '相手'}のターン開始`);
   sendState();
 }
 
-function playAttackBugEffect(defenderId, damageText, isDestroyed) {
+function playAttackBugEffect(defenderId, damageText, isDestroyed, isCritical) {
   const cards = document.querySelectorAll('.card');
   let targetCardEl = null;
 
@@ -638,11 +967,20 @@ function playAttackBugEffect(defenderId, damageText, isDestroyed) {
   });
 
   if (targetCardEl) {
-    showDamageEffect(targetCardEl, damageText);
+    showDamageEffect(targetCardEl, damageText, isCritical);
     if (isDestroyed) {
       shatterCard(targetCardEl);
     }
   }
+}
+
+function playSummonImpactByCardId(cardId) {
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(c => {
+    if (c.dataset.cardId === cardId) {
+      showSummonImpactEffect(c);
+    }
+  });
 }
 
 function processAction(role, action, payload) {
@@ -663,15 +1001,29 @@ function processAction(role, action, payload) {
   } 
   else if (action === 'PLAY_CARD') {
     let card = p.hand[payload.handIndex];
+    
+    // 🛑 フィールド最高5枚制限 🛑
+    if (p.field.length >= 5) {
+      log("フィールドには最高5枚までしか出せません！");
+      return;
+    }
+
     if (p.mana >= card.cost) {
       p.mana -= card.cost;
       p.hand.splice(payload.handIndex, 1);
 
-      // ⚡ 速攻（charge）以外は召喚酔いが発生
       card.exhausted = (card.ability !== 'charge');
       p.field.push(card);
 
-      // ⚡ 1ドロー（draw）効果
+      if (card.cost >= 5) {
+        setTimeout(() => {
+          playSummonImpactByCardId(card.id);
+          if (conn && conn.open) {
+            conn.send({ type: 'EFFECT_SUMMON_IMPACT', cardId: card.id });
+          }
+        }, 100);
+      }
+
       if (card.ability === 'draw' && p.deck.length > 0) {
         let drawn = p.deck.pop();
         p.hand.push(drawn);
@@ -685,21 +1037,22 @@ function processAction(role, action, payload) {
     let attacker = p.field.find(c => c.id === payload.attackerId);
     let defender = opp.field.find(c => c.id === payload.defenderId);
 
-    // ⚡ 挑発（taunt）チェック：相手の場に挑発カードがいる場合は挑発カードしか選択不可
     let hasTaunt = opp.field.some(c => c.ability === 'taunt');
     if (hasTaunt && defender.ability !== 'taunt') {
       log("挑発（ガード）を持つカードを攻撃してください！");
+      clearTargetArrow();
       return;
     }
 
     if (attacker && defender && !attacker.exhausted) {
       attacker.exhausted = true;
-      let attAtk = calcAtk(attacker, defender);
+      let mul = calcAtkMul(attacker, defender);
+      let attAtk = attacker.atk * mul;
+      let isCritical = (mul > 1);
 
       triggerSE('attack');
       defender.hp -= attAtk;
 
-      // ⚡ 回復（drain）効果：攻撃時自身のHPを300回復
       if (attacker.ability === 'drain') {
         attacker.hp = Math.min(attacker.maxHp, attacker.hp + 300);
       }
@@ -707,25 +1060,26 @@ function processAction(role, action, payload) {
       let isDestroyed = defender.hp <= 0;
       let dmgText = `-${attAtk}`;
 
-      // ⚡ 道連れ（revenge）効果
       let isRevengeDestroyed = false;
       if (isDestroyed && defender.ability === 'revenge') {
         attacker.hp = 0;
         isRevengeDestroyed = true;
       }
 
-      playAttackBugEffect(defender.id, dmgText, isDestroyed);
+      playAttackBugEffect(defender.id, dmgText, isDestroyed, isCritical);
 
       if (conn && conn.open) {
         conn.send({ 
           type: 'EFFECT_BUG', 
           defenderId: defender.id, 
           damageText: dmgText, 
-          isDestroyed: isDestroyed 
+          isDestroyed: isDestroyed,
+          isCritical: isCritical
         });
       }
 
-      log(`[${attacker.name}]の攻撃！ ${defender.name}に${attAtk}ダメージ！`);
+      log(`[${attacker.name}]の攻撃！ ${defender.name}に${attAtk}ダメージ！${isCritical ? '⚡弱点ヒット!' : ''}`);
+      clearTargetArrow();
 
       if (isDestroyed) {
         setTimeout(() => triggerSE('destroy'), 150);
@@ -733,7 +1087,7 @@ function processAction(role, action, payload) {
           opp.field = opp.field.filter(c => c.id !== defender.id);
 
           if (isRevengeDestroyed) {
-            playAttackBugEffect(attacker.id, "道連れ!", true);
+            playAttackBugEffect(attacker.id, "道連れ!", true, false);
             p.field = p.field.filter(c => c.id !== attacker.id);
             log(`[${defender.name}]の【道連れ】！ [${attacker.name}]も道連れ！`);
           } else {
@@ -746,10 +1100,10 @@ function processAction(role, action, payload) {
     }
   }
   else if (action === 'ATTACK_HERO') {
-    // ⚡ 挑発カードがいる場合はダイレクトアタック不可
     let hasTaunt = opp.field.some(c => c.ability === 'taunt');
     if (hasTaunt) {
       log("挑発を持つカードが存在するため直接攻撃できません！");
+      clearTargetArrow();
       return;
     }
 
@@ -767,6 +1121,8 @@ function processAction(role, action, payload) {
         conn.send({ type: 'EFFECT_HERO' });
       }
 
+      clearTargetArrow();
+
       if (opp.territory.length > 0) {
         let taken = opp.territory.pop();
         opp.hand.push(taken);
@@ -781,11 +1137,13 @@ function processAction(role, action, payload) {
   }
   else if (action === 'SURRENDER') {
     triggerSE('destroy');
+    clearTargetArrow();
     G.gameOver = true;
     G.winner = oppRole;
     log(`${role === myRole ? 'あなた' : '相手'}がサレンダーしました。`);
   }
   else if (action === 'END_TURN') {
+    clearTargetArrow();
     startTurn(oppRole);
     return;
   }
@@ -800,16 +1158,15 @@ function processAction(role, action, payload) {
   sendState();
 }
 
-function calcAtk(att, def) {
-  let mul = 1;
+function calcAtkMul(att, def) {
   if (
     (att.element === 'red' && def.element === 'green') ||
     (att.element === 'green' && def.element === 'blue') ||
     (att.element === 'blue' && def.element === 'red')
   ) {
-    mul = 2;
+    return 2;
   }
-  return att.atk * mul;
+  return 1;
 }
 
 function log(msg) {
@@ -868,6 +1225,7 @@ function render() {
   renderFoodZone('my-food', me.food, me.mana);
   renderFoodZone('opp-food', opp.food, opp.mana);
 
+  // 手札
   const handEl = document.getElementById('my-hand');
   if (handEl) {
     handEl.innerHTML = '';
@@ -876,7 +1234,7 @@ function render() {
     me.hand.forEach((card, idx) => {
       let cardEl = createCardEl(card, false);
 
-      if (isMyTurn && me.mana >= card.cost && !G.gameOver) {
+      if (isMyTurn && me.mana >= card.cost && !G.gameOver && me.field.length < 5) {
         cardEl.classList.add('playable');
       }
 
@@ -895,6 +1253,7 @@ function render() {
         if (!isMyTurn || G.gameOver) return;
         selectedHandIndex = (selectedHandIndex === idx) ? null : idx;
         selectedAttackerCardId = null;
+        clearTargetArrow();
         render();
         toggleActionModal();
       });
@@ -903,6 +1262,7 @@ function render() {
     });
   }
 
+  // 自分フィールド
   const myFieldEl = document.getElementById('my-field');
   if (myFieldEl) {
     myFieldEl.innerHTML = '';
@@ -914,6 +1274,11 @@ function render() {
         if (!isMyTurn || card.exhausted || G.gameOver) return;
         selectedAttackerCardId = (selectedAttackerCardId === card.id) ? null : card.id;
         selectedHandIndex = null;
+        
+        if (!selectedAttackerCardId) {
+          clearTargetArrow();
+        }
+        
         toggleActionModal();
         render();
       });
@@ -922,37 +1287,73 @@ function render() {
     });
   }
 
+  // 🎯 相手フィールド（ダブルタップ ＆ ターゲットアロー同期） 🎯
   const oppFieldEl = document.getElementById('opp-field');
   if (oppFieldEl) {
     oppFieldEl.innerHTML = '';
     opp.field.forEach(card => {
       let cardEl = createCardEl(card, false);
 
-      attachCardInteraction(cardEl, card, () => {
-        if (selectedAttackerCardId && !G.gameOver) {
-          sendAction('ATTACK_BUG', { attackerId: selectedAttackerCardId, defenderId: card.id });
-          selectedAttackerCardId = null;
-          render();
-        }
-      });
-
       if (selectedAttackerCardId && !G.gameOver) {
         cardEl.classList.add('targetable-hero');
       }
+
+      attachCardInteraction(cardEl, card, () => {
+        if (selectedAttackerCardId && !G.gameOver) {
+          if (targetedDefenderCardId !== card.id) {
+            targetedDefenderCardId = card.id;
+
+            if (conn && conn.open) {
+              conn.send({ 
+                type: 'TARGET_LOCK', 
+                attackerId: selectedAttackerCardId, 
+                defenderId: card.id 
+              });
+            }
+
+            log(`🎯 [${card.name}]をロックオン！ もう一度タップで攻撃！`);
+            render();
+          } 
+          else {
+            sendAction('ATTACK_BUG', { attackerId: selectedAttackerCardId, defenderId: card.id });
+            selectedAttackerCardId = null;
+            clearTargetArrow();
+            render();
+          }
+        }
+      });
 
       oppFieldEl.appendChild(cardEl);
     });
   }
 
+  // 🎯 相手本体への攻撃（ダブルタップ ＆ ターゲットアロー同期） 🎯
   const oppInfoBox = document.getElementById('opponent-info-box');
   if (oppInfoBox) {
     if (selectedAttackerCardId && !G.gameOver && opp.field.length === 0) {
       oppInfoBox.classList.add('targetable-hero');
       oppInfoBox.onclick = (e) => {
         e.stopPropagation();
-        sendAction('ATTACK_HERO', { attackerId: selectedAttackerCardId });
-        selectedAttackerCardId = null;
-        render();
+
+        if (targetedDefenderCardId !== 'HERO') {
+          targetedDefenderCardId = 'HERO';
+
+          if (conn && conn.open) {
+            conn.send({ 
+              type: 'TARGET_LOCK', 
+              attackerId: selectedAttackerCardId, 
+              defenderId: 'HERO' 
+            });
+          }
+
+          log(`🎯 相手本体をロックオン！ もう一度タップでダイレクトアタック！`);
+          render();
+        } else {
+          sendAction('ATTACK_HERO', { attackerId: selectedAttackerCardId });
+          selectedAttackerCardId = null;
+          clearTargetArrow();
+          render();
+        }
       };
     } else {
       oppInfoBox.classList.remove('targetable-hero');
@@ -960,6 +1361,10 @@ function render() {
     }
   }
 
+  // 🎯 描画更新時に自分／相手のターゲットアローを同期描画 🎯
+  updateTargetArrow();
+
+  // リザルト表示処理
   const resultModal = document.getElementById('result-modal');
   if (resultModal) {
     if (G.gameOver && G.winner) {
@@ -1015,17 +1420,22 @@ function renderFoodZone(elementId, cardArray, availableMana) {
   if (!el) return;
   el.innerHTML = '';
   cardArray.forEach((card, idx) => {
-    let cardEl = createCardEl(card, true);
-    if (idx >= availableMana) {
-      cardEl.classList.add('food-used');
-    }
-    el.appendChild(cardEl);
+    let jewel = document.createElement('div');
+    jewel.className = `emerald-jewel ${idx >= availableMana ? 'used' : ''}`;
+    jewel.title = `${card.name} (コスト:${card.cost})`;
+
+    attachCardInteraction(jewel, card, () => {
+      openCardPreview(card);
+    });
+
+    el.appendChild(jewel);
   });
 }
 
 function createCardEl(card, isFood = false) {
   const el = document.createElement('div');
-  el.className = `card ${card.element} ${card.exhausted ? 'exhausted' : ''}`;
+  const isHolo = (card.cost >= 5);
+  el.className = `card ${card.element} ${card.exhausted ? 'exhausted' : ''} ${isHolo ? 'holographic' : ''}`;
   el.dataset.cardId = card.id;
   
   const elemText = { red: '赤', blue: '青', green: '緑' }[card.element];
@@ -1075,9 +1485,19 @@ function toggleActionModal() {
   if (selectedHandIndex !== null && !G.gameOver) {
     modal.classList.remove('hidden');
     let card = G.players[myRole].hand[selectedHandIndex];
+    let isFieldFull = G.players[myRole].field.length >= 5;
+
     document.getElementById('action-modal-card-name').innerText = `[${card.name}] の操作`;
     document.getElementById('btn-act-food').disabled = G.foodSetThisTurn;
-    document.getElementById('btn-act-play').disabled = G.players[myRole].mana < card.cost;
+    
+    // 🛑 フィールド5枚制限時の「場に出す」制御 🛑
+    const btnPlay = document.getElementById('btn-act-play');
+    btnPlay.disabled = (G.players[myRole].mana < card.cost) || isFieldFull;
+    if (isFieldFull) {
+      btnPlay.innerText = "場に出す (上限5枚)";
+    } else {
+      btnPlay.innerText = "場に出す";
+    }
   } else {
     modal.classList.add('hidden');
   }
@@ -1124,6 +1544,7 @@ function initUIEvents() {
     btnEndTurn.onclick = () => {
       selectedHandIndex = null;
       selectedAttackerCardId = null;
+      clearTargetArrow();
       toggleActionModal();
       sendAction('END_TURN');
     };
@@ -1135,6 +1556,7 @@ function initUIEvents() {
       if (confirm("本当にサレンダー（降参）しますか？")) {
         selectedHandIndex = null;
         selectedAttackerCardId = null;
+        clearTargetArrow();
         toggleActionModal();
         sendAction('SURRENDER');
       }
@@ -1158,6 +1580,7 @@ function initUIEvents() {
 }
 
 function startApp() {
+  loadCustomDeck();
   initAvatarSelection();
   initUIEvents();
   initBGMOnFirstTouch();
