@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>昆虫カードバトル Online</title>
 
-  <!-- LINEなどのアプリ内ブラウザ対策：既定の外部ブラウザで強制オープン -->
+  <!-- LINEなどのアプリ内ブラウザ対策 -->
   <script>
     (function() {
       var ua = navigator.userAgent || '';
@@ -40,6 +40,11 @@
       <div id="avatar-list" class="avatar-list"></div>
     </div>
 
+    <!-- デッキ編集ボタン -->
+    <div class="lobby-section">
+      <button class="btn-deck-edit" onclick="openDeckBuilder()">🛠️ デッキ編集 (<span id="lobby-deck-count">20</span>/20枚)</button>
+    </div>
+
     <div class="lobby-section">
       <button id="btn-create" onclick="createRoom()">部屋を作成（ホスト）</button>
       <div id="copy-id-container">
@@ -57,6 +62,24 @@
 
   <!-- ゲーム画面 -->
   <div id="game-board" class="hidden">
+    <!-- 🍃 蛍＆自然な霧キャンバス -->
+    <canvas id="firefly-canvas"></canvas>
+
+    <!-- 🎯 スタイリッシュターゲットアロー(矢印線) SVG描画レイヤー -->
+    <svg id="target-arrow-svg" class="target-arrow-svg">
+      <defs>
+        <marker id="arrowhead" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff3344" />
+        </marker>
+      </defs>
+      <path id="arrow-path" class="arrow-path hidden" d="" marker-end="url(#arrowhead)" />
+    </svg>
+
+    <!-- 🚩 ターン開始演出バナー -->
+    <div id="turn-banner" class="turn-banner hidden">
+      <div id="turn-banner-text" class="turn-banner-text">次はあなたの番です</div>
+    </div>
+
     <!-- 相手エリア -->
     <div class="area" id="opponent-area">
       <div class="player-info" id="opponent-info-box">
@@ -98,7 +121,6 @@
       </div>
       <div class="player-info">
         <div class="player-profile">
-          <!-- ★ アバター横にうっすら透過したエモートボタンを配置 ★ -->
           <div class="avatar-wrapper">
             <img id="my-avatar-img" class="player-avatar" src="" alt="自分アイコン">
             <button class="emote-trigger-btn" onclick="toggleEmotePicker(event)">💬</button>
@@ -156,6 +178,27 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- デッキ構築モーダル -->
+  <div id="deck-builder-modal" class="deck-modal hidden">
+    <div class="deck-modal-content">
+      <div class="deck-header">
+        <h2>🛠️ デッキ編成</h2>
+        <div class="deck-counter">枚数: <span id="deck-count-num">0</span> / 20枚</div>
+      </div>
+
+      <div class="deck-section-title">▼ 構成中のデッキ (タップで外す)</div>
+      <div id="current-deck-grid" class="deck-grid"></div>
+
+      <div class="deck-section-title">▼ カードプール (タップで追加 / 同種3枚まで)</div>
+      <div id="card-pool-grid" class="deck-grid pool-grid"></div>
+
+      <div class="deck-footer-buttons">
+        <button class="btn-secondary" onclick="resetDeckToDefault()">標準初期化</button>
+        <button onclick="saveAndCloseDeckBuilder()">保存して完了</button>
+      </div>
+    </div>
   </div>
 
   <script src="js/script.js"></script>
