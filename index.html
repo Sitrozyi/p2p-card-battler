@@ -26,7 +26,8 @@
     </div>
 
     <div class="lobby-section">
-      <button id="btn-create">部屋を作成（ホスト）</button>
+      <!-- ★ onclick="createRoom()" を追加 ★ -->
+      <button id="btn-create" onclick="createRoom()">部屋を作成（ホスト）</button>
       <div id="copy-id-container">
         <div style="font-size: 0.8rem; margin-bottom:4px; color:#aaa;">下のIDをタップしてコピー:</div>
         <div id="host-id-btn" class="copy-btn">ID生成中...</div>
@@ -35,7 +36,8 @@
     <hr style="border-color: rgba(212, 175, 55, 0.2);">
     <div class="lobby-section">
       <input type="text" id="join-id" placeholder="相手のIDを入力">
-      <button id="btn-join">部屋に入る（ゲスト）</button>
+      <!-- ★ onclick="joinRoom()" を追加 ★ -->
+      <button id="btn-join" onclick="joinRoom()">部屋に入る（ゲスト）</button>
     </div>
     <div id="status-msg" style="margin-top:15px; font-size:0.85rem; color:#aaa;"></div>
   </div>
