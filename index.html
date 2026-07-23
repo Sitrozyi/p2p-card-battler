@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>昆虫カードバトル Online</title>
+  <!-- PeerJS CDN -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <!-- フォント追加 (Cinzel) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+  <!-- スタイルシートの読み込み -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ロビー画面 -->
+  <div id="lobby">
+    <h1>蟲カードバトル</h1>
+    <div class="lobby-section">
+      <button id="btn-create">部屋を作成（ホスト）</button>
+      <div id="copy-id-container">
+        <div style="font-size: 0.8rem; margin-bottom:4px; color:#aaa;">下のIDをタップしてコピー:</div>
+        <div id="host-id-btn" class="copy-btn">ID生成中...</div>
+      </div>
+    </div>
+    <hr style="border-color:#444;">
+    <div class="lobby-section">
+      <input type="text" id="join-id" placeholder="相手のIDを入力">
+      <button id="btn-join">部屋に入る（ゲスト）</button>
+    </div>
+    <div id="status-msg" style="margin-top:15px; font-size:0.85rem; color:#aaa;"></div>
+  </div>
+
+  <!-- ゲーム画面 -->
+  <div id="game-board" class="hidden">
+    <!-- 相手エリア -->
+    <div class="area" id="opponent-area">
+      <div class="player-info" id="opponent-info-box">
+        <div>
+          相手 [デッキ:<span id="opp-deck">0</span> 手札:<span id="opp-hand-count">0</span>]
+        </div>
+        <div class="territory-zone" id="opp-territory"></div>
+      </div>
+      <!-- 相手エサ場 -->
+      <div class="food-zone-wrapper">
+        <div class="food-zone-title">相手のエサ場 (<span id="opp-food-count">0</span>)</div>
+        <div class="food-zone" id="opp-food"></div>
+      </div>
+      <!-- 相手フィールド -->
+      <div class="field-zone" id="opp-field"></div>
+    </div>
+
+    <!-- 中央操作バー -->
+    <div id="center-bar">
+      <div id="log">対戦開始！</div>
+      <button id="btn-end-turn" style="width: auto; padding: 4px 12px; font-size:0.85rem;">ターン終了</button>
+    </div>
+
+    <!-- 自分エリア -->
+    <div class="area" id="my-area">
+      <!-- 自分フィールド -->
+      <div class="field-zone" id="my-field"></div>
+      <!-- 自分エサ場 -->
+      <div class="food-zone-wrapper">
+        <div class="food-zone-title">自分のエサ場 (コスト:<span id="my-mana">0</span>/<span id="my-food-count">0</span>)</div>
+        <div class="food-zone" id="my-food"></div>
+      </div>
+      <div class="player-info">
+        <div>
+          自分 [デッキ:<span id="my-deck">0</span>]
+        </div>
+        <div class="territory-zone" id="my-territory"></div>
+      </div>
+      <!-- 自分手札 -->
+      <div class="hand-zone" id="my-hand"></div>
+    </div>
+
+    <!-- アクション選択ポップアップ -->
+    <div id="action-modal" class="hidden">
+      <button id="btn-act-food">エサ場に置く</button>
+      <button id="btn-act-play">場に出す</button>
+      <button id="btn-act-cancel">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- JavaScriptの読み込み -->
+  <script src="js/script.js"></script>
+</body>
+</html>
