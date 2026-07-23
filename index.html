@@ -9,7 +9,6 @@
   <script>
     (function() {
       var ua = navigator.userAgent || '';
-      // LINEアプリ内ブラウザを検知した場合
       if (ua.indexOf('LINE') !== -1) {
         if (location.href.indexOf('openExternalBrowser=1') === -1) {
           var sep = location.href.indexOf('?') !== -1 ? '&' : '?';
@@ -21,23 +20,21 @@
 
   <!-- PeerJS CDN -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-  <!-- フォント追加 (Cinzel) -->
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
-  <!-- スタイルシートの読み込み -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- BGM ON/OFF トグルボタン（画面右上） -->
+  <!-- 🎵 BGM ON/OFF ボタン -->
   <button id="btn-bgm-toggle" class="bgm-toggle-btn" onclick="toggleBGM()">🎵 BGM: ON</button>
 
   <!-- ロビー画面 -->
   <div id="lobby">
     <h1>蟲カードバトル</h1>
 
-    <!-- プレイヤーアイコン選択 -->
     <div class="lobby-section">
       <div class="avatar-select-title">アイコンを選択</div>
       <div id="avatar-list" class="avatar-list"></div>
@@ -64,7 +61,10 @@
     <div class="area" id="opponent-area">
       <div class="player-info" id="opponent-info-box">
         <div class="player-profile">
-          <img id="opp-avatar-img" class="player-avatar" src="" alt="相手アイコン">
+          <div class="avatar-wrapper">
+            <img id="opp-avatar-img" class="player-avatar" src="" alt="相手アイコン">
+            <div id="opp-emote-bubble" class="emote-bubble hidden"></div>
+          </div>
           <div>
             相手 [デッキ:<span id="opp-deck">0</span> 手札:<span id="opp-hand-count">0</span>]
           </div>
@@ -83,6 +83,7 @@
     <!-- 中央操作バー -->
     <div id="center-bar">
       <button id="btn-surrender" class="btn-surrender">サレンダー</button>
+      <button id="btn-emote" class="btn-emote" onclick="toggleEmotePicker()">💬</button>
       <div id="log">対戦開始！</div>
       <button id="btn-end-turn">ターン終了</button>
     </div>
@@ -98,7 +99,10 @@
       </div>
       <div class="player-info">
         <div class="player-profile">
-          <img id="my-avatar-img" class="player-avatar" src="" alt="自分アイコン">
+          <div class="avatar-wrapper">
+            <img id="my-avatar-img" class="player-avatar" src="" alt="自分アイコン">
+            <div id="my-emote-bubble" class="emote-bubble hidden"></div>
+          </div>
           <div>
             自分 [デッキ:<span id="my-deck">0</span>]
           </div>
@@ -107,6 +111,14 @@
       </div>
       <!-- 自分手札 -->
       <div class="hand-zone" id="my-hand"></div>
+    </div>
+
+    <!-- エモート選択ポップアップ -->
+    <div id="emote-picker" class="emote-picker hidden">
+      <button onclick="sendEmote('よろしく！')">👋 よろしく！</button>
+      <button onclick="sendEmote('すごい！')">👏 すごい！</button>
+      <button onclick="sendEmote('ぐぬぬ…')">絶句 ぐぬぬ…</button>
+      <button onclick="sendEmote('参りました！')">🙇 参りました！</button>
     </div>
 
     <!-- アクション選択ポップアップ -->
@@ -121,7 +133,7 @@
       </div>
     </div>
 
-    <!-- リザルト画面（対戦結果ポップアップ） -->
+    <!-- リザルト画面 -->
     <div id="result-modal" class="hidden">
       <div class="result-content">
         <h2 id="result-title">VICTORY</h2>
@@ -133,9 +145,18 @@
         <div id="rematch-status"></div>
       </div>
     </div>
+
+    <!-- 🔍 カード拡大プレビューモーダル -->
+    <div id="card-preview-modal" class="preview-modal hidden" onclick="closeCardPreview()">
+      <div class="preview-modal-content" onclick="event.stopPropagation()">
+        <div id="preview-card-container"></div>
+        <div id="preview-card-desc" class="preview-card-desc"></div>
+        <button class="btn-secondary" style="margin-top:10px;" onclick="closeCardPreview()">閉じる</button>
+      </div>
+    </div>
+
   </div>
 
-  <!-- JavaScriptの読み込み -->
   <script src="js/script.js"></script>
 </body>
 </html>
