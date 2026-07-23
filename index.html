@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>昆虫カードバトル Online</title>
   <!-- PeerJS CDN -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -55,7 +55,7 @@
     <!-- 中央操作バー -->
     <div id="center-bar">
       <div id="log">対戦開始！</div>
-      <button id="btn-end-turn" style="width: auto; padding: 4px 12px; font-size:0.85rem;">ターン終了</button>
+      <button id="btn-end-turn">ターン終了</button>
     </div>
 
     <!-- 自分エリア -->
@@ -77,11 +77,16 @@
       <div class="hand-zone" id="my-hand"></div>
     </div>
 
-    <!-- アクション選択ポップアップ -->
+    <!-- アクション選択ポップアップ (モーダル背景付き) -->
     <div id="action-modal" class="hidden">
-      <button id="btn-act-food">エサ場に置く</button>
-      <button id="btn-act-play">場に出す</button>
-      <button id="btn-act-cancel">キャンセル</button>
+      <div class="action-modal-content">
+        <div class="action-modal-title" id="action-modal-card-name">カード選択</div>
+        <div class="action-modal-buttons">
+          <button id="btn-act-food">エサ場に置く</button>
+          <button id="btn-act-play">場に出す</button>
+          <button id="btn-act-cancel" class="btn-secondary">キャンセル</button>
+        </div>
+      </div>
     </div>
 
     <!-- リザルト画面（対戦結果ポップアップ） -->
@@ -91,7 +96,7 @@
         <p id="result-msg">あなたの勝利です！</p>
         <div class="result-buttons">
           <button id="btn-rematch">再戦する</button>
-          <button id="btn-home">ホームに戻る</button>
+          <button id="btn-home" class="btn-secondary">ホームに戻る</button>
         </div>
         <div id="rematch-status"></div>
       </div>

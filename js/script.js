@@ -52,18 +52,18 @@ function triggerSE(type) {
 
 // --- カード定義データ ---
 const CARD_DATA = [
-  { name: "アリ", cost: 1, atk: 700, hp: 500, element: "red", image: "images/ant.jpg" },
-  { name: "クワガタ", cost: 2, atk: 1300, hp: 800, element: "red", image: "images/kuwagata.jpg" },
-  { name: "カブトムシ", cost: 3, atk: 1800, hp: 1300, element: "red", image: "images/kabuto.jpg" },
-  { name: "スズメバチ", cost: 4, atk: 2500, hp: 1800, element: "red", image: "images/suzu.jpg" },
+  { name: "アリ", cost: 1, atk: 400, hp: 500, element: "red", image: "images/ant.jpg" },
+  { name: "クワガタ", cost: 2, atk: 400, hp: 800, element: "red", image: "images/kuwagata.jpg" },
+  { name: "カブトムシ", cost: 3, atk: 500, hp: 1000, element: "red", image: "images/kabuto.jpg" },
+  { name: "スズメバチ", cost: 4, atk: 900, hp: 1200, element: "red", image: "images/suzu.jpg" },
   { name: "アメンボ", cost: 1, atk: 400, hp: 800, element: "blue", image: "images/amen.jpg" },
   { name: "ゲンゴロウ", cost: 2, atk: 800, hp: 1300, element: "blue", image: "images/gengo.jpg" },
-  { name: "タガメ", cost: 3, atk: 1200, hp: 2000, element: "blue", image: "images/tagame.png" },
-  { name: "ミズカマキリ", cost: 4, atk: 1700, hp: 2700, element: "blue", image: "images/mizu.png" },
+  { name: "タガメ", cost: 3, atk: 500, hp: 1300, element: "blue", image: "images/tagame.png" },
+  { name: "ミズカマキリ", cost: 4, atk: 700, hp: 1100, element: "blue", image: "images/mizu.png" },
   { name: "バッタ", cost: 1, atk: 600, hp: 600, element: "green", image: "images/bat.png" },
-  { name: "キリギリス", cost: 2, atk: 1000, hp: 1000, element: "green", image: "images/ki.png" },
-  { name: "カマキリ", cost: 3, atk: 1500, hp: 1500, element: "green", image: "images/kama.png" },
-  { name: "オニヤンマ", cost: 4, atk: 2100, hp: 2200, element: "green", image: "images/oni.png" },
+  { name: "キリギリス", cost: 2, atk: 400, hp: 600, element: "green", image: "images/ki.png" },
+  { name: "カマキリ", cost: 3, atk: 600, hp: 900, element: "green", image: "images/kama.png" },
+  { name: "オニヤンマ", cost: 4, atk: 1000, hp: 1500, element: "green", image: "images/oni.png" },
 ];
 
 // --- ゲーム状態変数 ---
@@ -260,7 +260,6 @@ function startTurn(role) {
   }
 
   p.mana = p.food.length;
-  // ターン開始時：自分の場の虫を起こし＆HP全回復
   p.field.forEach(c => {
     c.exhausted = false;
     c.hp = c.maxHp; 
@@ -302,11 +301,9 @@ function processAction(role, action, payload) {
 
     if (attacker && defender && !attacker.exhausted) {
       attacker.exhausted = true;
-      
       let attAtk = calcAtk(attacker, defender);
 
       triggerSE('attack');
-
       defender.hp -= attAtk;
 
       log(`[${attacker.name}]の攻撃！ ${defender.name}に${attAtk}ダメージ！`);
@@ -347,7 +344,6 @@ function processAction(role, action, payload) {
   }
   else if (action === 'REMATCH') {
     G.rematchState[role] = true;
-    // 両者が再戦を選択した場合は新ゲーム開始
     if (G.rematchState.host && G.rematchState.guest) {
       initGame();
       return;
@@ -408,11 +404,10 @@ function render() {
   renderTerritory('my-territory', me.territory.length);
   renderTerritory('opp-territory', opp.territory.length);
 
-  // エサ場描画 (消費済みカードをグレーアウト表示)
   renderFoodZone('my-food', me.food, me.mana);
   renderFoodZone('opp-food', opp.food, opp.mana);
 
-  // 手札（扇状配置 ＆ 召喚可能パルス発光）
+  // 手札（扇状配置 ＆ タップ操作）
   const handEl = document.getElementById('my-hand');
   handEl.innerHTML = '';
   const handCount = me.hand.length;
@@ -430,12 +425,13 @@ function render() {
 
     if (handCount > 1) {
       const mid = (handCount - 1) / 2;
-      const angle = (idx - mid) * 5;
-      const offsetY = Math.abs(idx - mid) * 3;
+      const angle = (idx - mid) * 4;
+      const offsetY = Math.abs(idx - mid) * 2;
       cardEl.style.transform = `translateY(${offsetY}px) rotate(${angle}deg)`;
     }
 
-    cardEl.onclick = () => {
+    cardEl.onclick = (e) => {
+      e.stopPropagation();
       if (!isMyTurn || G.gameOver) return;
       selectedHandIndex = (selectedHandIndex === idx) ? null : idx;
       selectedAttackerCardId = null;
@@ -451,7 +447,8 @@ function render() {
   me.field.forEach(card => {
     let cardEl = createCardEl(card);
     if (card.id === selectedAttackerCardId) cardEl.classList.add('selected');
-    cardEl.onclick = () => {
+    cardEl.onclick = (e) => {
+      e.stopPropagation();
       if (!isMyTurn || card.exhausted || G.gameOver) return;
       selectedAttackerCardId = (selectedAttackerCardId === card.id) ? null : card.id;
       selectedHandIndex = null;
@@ -468,7 +465,8 @@ function render() {
     let cardEl = createCardEl(card);
     if (selectedAttackerCardId && !G.gameOver) {
       cardEl.classList.add('targetable-hero');
-      cardEl.onclick = () => {
+      cardEl.onclick = (e) => {
+        e.stopPropagation();
         sendAction('ATTACK_BUG', { attackerId: selectedAttackerCardId, defenderId: card.id });
         selectedAttackerCardId = null;
         render();
@@ -477,11 +475,12 @@ function render() {
     oppFieldEl.appendChild(cardEl);
   });
 
-  // 相手プレイヤー（本体攻撃）
+  // 相手本体への攻撃
   const oppInfoBox = document.getElementById('opponent-info-box');
   if (selectedAttackerCardId && !G.gameOver) {
     oppInfoBox.classList.add('targetable-hero');
-    oppInfoBox.onclick = () => {
+    oppInfoBox.onclick = (e) => {
+      e.stopPropagation();
       sendAction('ATTACK_HERO', { attackerId: selectedAttackerCardId });
       selectedAttackerCardId = null;
       render();
@@ -491,9 +490,9 @@ function render() {
     oppInfoBox.onclick = null;
   }
 
-  // --- ゲーム終了（リザルト画面）のレンダリング ---
+  // リザルト画面の描画制御
   const resultModal = document.getElementById('result-modal');
-  if (G.gameOver) {
+  if (G.gameOver && G.winner) {
     resultModal.classList.remove('hidden');
     const titleEl = document.getElementById('result-title');
     const msgEl = document.getElementById('result-msg');
@@ -511,7 +510,6 @@ function render() {
       msgEl.innerText = '敗北しました...';
     }
 
-    // 再戦リクエストのステータス表示
     const myRematch = G.rematchState[myRole];
     const oppRematch = G.rematchState[oppRole];
 
@@ -578,8 +576,9 @@ function toggleActionModal() {
   const modal = document.getElementById('action-modal');
   if (selectedHandIndex !== null && !G.gameOver) {
     modal.classList.remove('hidden');
-    document.getElementById('btn-act-food').disabled = G.foodSetThisTurn;
     let card = G.players[myRole].hand[selectedHandIndex];
+    document.getElementById('action-modal-card-name').innerText = `[${card.name}] の操作`;
+    document.getElementById('btn-act-food').disabled = G.foodSetThisTurn;
     document.getElementById('btn-act-play').disabled = G.players[myRole].mana < card.cost;
   } else {
     modal.classList.add('hidden');
