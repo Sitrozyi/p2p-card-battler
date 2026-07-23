@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>昆虫カードバトル Online</title>
 
-  <!-- LINEなどのアプリ内ブラウザ対策：既定の外部ブラウザ（Chrome/Safari）で強制オープン -->
+  <!-- LINEなどのアプリ内ブラウザ対策：既定の外部ブラウザで強制オープン -->
   <script>
     (function() {
       var ua = navigator.userAgent || '';
@@ -83,7 +83,6 @@
     <!-- 中央操作バー -->
     <div id="center-bar">
       <button id="btn-surrender" class="btn-surrender">サレンダー</button>
-      <button id="btn-emote" class="btn-emote" onclick="toggleEmotePicker()">💬</button>
       <div id="log">対戦開始！</div>
       <button id="btn-end-turn">ターン終了</button>
     </div>
@@ -99,9 +98,19 @@
       </div>
       <div class="player-info">
         <div class="player-profile">
+          <!-- ★ アバター横にうっすら透過したエモートボタンを配置 ★ -->
           <div class="avatar-wrapper">
             <img id="my-avatar-img" class="player-avatar" src="" alt="自分アイコン">
+            <button class="emote-trigger-btn" onclick="toggleEmotePicker(event)">💬</button>
             <div id="my-emote-bubble" class="emote-bubble hidden"></div>
+
+            <!-- エモート選択ポップアップ -->
+            <div id="emote-picker" class="emote-picker hidden" onclick="event.stopPropagation()">
+              <button onclick="sendEmote('よろしく！')">👋 よろしく！</button>
+              <button onclick="sendEmote('すごい！')">👏 すごい！</button>
+              <button onclick="sendEmote('ぐぬぬ…')">😣 ぐぬぬ…</button>
+              <button onclick="sendEmote('参りました！')">🙇 参りました！</button>
+            </div>
           </div>
           <div>
             自分 [デッキ:<span id="my-deck">0</span>]
@@ -111,14 +120,6 @@
       </div>
       <!-- 自分手札 -->
       <div class="hand-zone" id="my-hand"></div>
-    </div>
-
-    <!-- エモート選択ポップアップ -->
-    <div id="emote-picker" class="emote-picker hidden">
-      <button onclick="sendEmote('よろしく！')">👋 よろしく！</button>
-      <button onclick="sendEmote('すごい！')">👏 すごい！</button>
-      <button onclick="sendEmote('ぐぬぬ…')">絶句 ぐぬぬ…</button>
-      <button onclick="sendEmote('参りました！')">🙇 参りました！</button>
     </div>
 
     <!-- アクション選択ポップアップ -->
@@ -151,7 +152,7 @@
       <div class="preview-modal-content" onclick="event.stopPropagation()">
         <div id="preview-card-container"></div>
         <div id="preview-card-desc" class="preview-card-desc"></div>
-        <button class="btn-secondary" style="margin-top:10px;" onclick="closeCardPreview()">閉じる</button>
+        <button class="btn-secondary" style="margin-top:10px; width:100%;" onclick="closeCardPreview()">閉じる</button>
       </div>
     </div>
 

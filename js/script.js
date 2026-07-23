@@ -1,11 +1,10 @@
 // --- BGM 設定 ---
-const BGM_PATH = 'music/1.mp3'; // music/ フォルダ内の音源を指定
+const BGM_PATH = 'music/1.mp3';
 let bgmAudio = new Audio(BGM_PATH);
 bgmAudio.loop = true;
-bgmAudio.volume = 0.4; // 音量 (0.0 〜 1.0)
+bgmAudio.volume = 0.4;
 let isBgmPlaying = false;
 
-// 初回画面タップ時にBGM自動再生（ブラウザの自動再生制限対策）
 function initBGMOnFirstTouch() {
   const startBgm = () => {
     playBGM();
@@ -27,9 +26,7 @@ function playBGM() {
   }
 }
 
-// BGM ON/OFF 切替
 window.toggleBGM = function() {
-  const btn = document.getElementById('btn-bgm-toggle');
   if (isBgmPlaying) {
     bgmAudio.pause();
     isBgmPlaying = false;
@@ -46,6 +43,176 @@ function updateBgmBtn() {
     btn.innerText = isBgmPlaying ? '🎵 BGM: ON' : '🔇 BGM: OFF';
   }
 }
+
+// 💬 エモート機能 💬
+window.toggleEmotePicker = function(e) {
+  if (e) e.stopPropagation();
+  const picker = document.getElementById('emote-picker');
+  if (picker) picker.classList.toggle('hidden');
+};
+
+// 画面のどこかをタップしたらエモートピッカーを閉じる
+document.addEventListener('click', () => {
+  const picker = document.getElementById('emote-picker');
+  if (picker) picker.classList.add('hidden');
+});
+
+window.sendEmote = function(text) {
+  const picker = document.getElementById('emote-picker');
+  if (picker) picker.classList.add('hidden');
+
+  showEmoteBubble('my-emote-bubble', text);
+  if (conn && conn.open) {
+    conn.send({ type: 'EMOTE', text: text });
+  }
+};
+
+function showEmoteBubble(elementId, text) {
+  const bubble = document.getElementById(elementId);
+  if (!bubble) return;
+  bubble.innerText = text;
+  bubble.classList.remove('hidden');
+
+  setTimeout(() => {
+    bubble.classList.add('hidden');
+  }, 2200);
+}
+
+// 💥 演出用エフェクト（ダメージ＆振動） 💥
+function showDamageEffect(targetEl, text) {
+  if (!targetEl) return;
+
+  targetEl.classList.add('card-hit-shake');
+  setTimeout(() => targetEl.classList.remove('card-hit-shake'), 380);
+
+  const rect = targetEl.getBoundingClientRect();
+  const dmgEl = document.createElement('div');
+  dmgEl.className = 'damage-popup';
+  dmgEl.innerText = text;
+
+  dmgEl.style.left = (rect.left + rect.width / 2) + 'px';
+  dmgEl.style.top = (rect.top + rect.height / 3) + 'px';
+
+  document.body.appendChild(dmgEl);
+
+  setTimeout(() => {
+    if (dmgEl.parentNode) dmgEl.parentNode.removeChild(dmgEl);
+  }, 850);
+}
+
+// 💥 演出用エフェクト（砕け散る破片） 💥
+function shatterCard(targetEl) {
+  if (!targetEl) return;
+
+  const rect = targetEl.getBoundingClientRect();
+  targetEl.classList.add('card-shattering');
+
+  const particleCount = 14;
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'shatter-particle';
+
+    const colors = ['#e63946', '#ffb703', '#d4af37', '#1a1a1a', '#8b0000'];
+    particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+    const px = rect.left + Math.random() * rect.width;
+    const py = rect.top + Math.random() * rect.height;
+    particle.style.left = px + 'px';
+    particle.style.top = py + 'px';
+
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 40 + Math.random() * 70;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance + 20;
+    const rot = (Math.random() - 0.5) * 720;
+
+    particle.style.setProperty('--tx', `${tx}px`);
+    particle.style.setProperty('--ty', `${ty}px`);
+    particle.style.setProperty('--rot', `${rot}deg`);
+
+    document.body.appendChild(particle);
+
+    setTimeout(() => {
+      if (particle.parentNode) particle.parentNode.removeChild(particle);
+    }, 650);
+  }
+}
+
+// 🔍 スマホ完全対応：長押し拡大プレビュー＆タップ切り分け処理 🔍
+function attachCardInteraction(cardEl, cardData, clickHandler) {
+  let longPressTimer = null;
+  let isLongPress = false;
+
+  const startPress = (e) => {
+    isLongPress = false;
+    longPressTimer = setTimeout(() => {
+      isLongPress = true;
+      openCardPreview(cardData);
+      if (navigator.vibrate) navigator.vibrate(40); // 長押し完了バイブ
+    }, 350); // 0.35秒ホールドでプレビュー
+  };
+
+  const cancelPress = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+  };
+
+  // タッチイベント
+  cardEl.addEventListener('touchstart', startPress, { passive: true });
+  cardEl.addEventListener('touchend', (e) => {
+    cancelPress();
+    if (isLongPress) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+  cardEl.addEventListener('touchmove', cancelPress);
+
+  // マウスイベント
+  cardEl.addEventListener('mousedown', startPress);
+  cardEl.addEventListener('mouseup', cancelPress);
+  cardEl.addEventListener('mouseleave', cancelPress);
+
+  // 通常タップ・クリック処理（長押しでなかった場合のみ実行）
+  cardEl.onclick = (e) => {
+    e.stopPropagation();
+    if (isLongPress) {
+      isLongPress = false;
+      return;
+    }
+    if (clickHandler) clickHandler(e);
+  };
+}
+
+function openCardPreview(cardData) {
+  const modal = document.getElementById('card-preview-modal');
+  const container = document.getElementById('preview-card-container');
+  const descEl = document.getElementById('preview-card-desc');
+
+  if (!modal || !container || !descEl) return;
+
+  container.innerHTML = '';
+  let cardEl = createCardEl(cardData, false);
+  container.appendChild(cardEl);
+
+  const abilityDescs = {
+    taunt: "【挑発】相手はこのカードしか攻撃・ダイレクトアタックできない。",
+    charge: "【速攻】召喚したターンにすぐ攻撃できる。",
+    revenge: "【道連れ】このカードが撃破された時、攻撃してきた相手も道連れで撃破する。",
+    drain: "【回復】攻撃した時、自身のHPを+300回復する。",
+    draw: "【1ドロー】召喚した時、山札からカードを1枚引く。"
+  };
+
+  descEl.innerText = cardData.ability ? abilityDescs[cardData.ability] : "特殊能力なし";
+  modal.classList.remove('hidden');
+}
+
+window.closeCardPreview = function() {
+  const modal = document.getElementById('card-preview-modal');
+  if (modal) modal.classList.add('hidden');
+};
 
 // --- icon/ フォルダ内の自作画像定義 ---
 const AVATAR_PRESETS = [
@@ -114,26 +281,25 @@ function triggerSE(type) {
   }
 }
 
-// --- カード定義データ ---
+// --- カード定義データ (特殊能力 ability) ---
 const CARD_DATA = [
-  { name: "アリ",       cost: 1, atk: 400,  hp: 300,  element: "red",   image: "images/ant.jpg" },
-  { name: "クワガタ",   cost: 2, atk: 600,  hp: 500,  element: "red",   image: "images/kuwagata.jpg" },
-  { name: "カブトムシ", cost: 3, atk: 600, hp: 700,  element: "red",   image: "images/kabuto.jpg" },
-  { name: "スズメバチ", cost: 4, atk: 1000, hp: 900,  element: "red",   image: "images/suzu.jpg" },
- { name: "オオムカデ", cost: 4, atk: 1500, hp: 1200,  element: "red",   image: "images/omu.jpg" },
+  { name: "アリ",       cost: 1, atk: 400,  hp: 300,  element: "red",   ability: "draw",    image: "images/ant.jpg" },
+  { name: "クワガタ",   cost: 2, atk: 500,  hp: 500,  element: "red",   ability: "taunt",   image: "images/kuwagata.jpg" },
+  { name: "カブトムシ", cost: 3, atk: 600,  hp: 700,  element: "red",   ability: "taunt",   image: "images/kabuto.jpg" },
+  { name: "スズメバチ", cost: 4, atk: 800,  hp: 900,  element: "red",   ability: "charge",  image: "images/suzu.jpg" },
+  { name: "ムカデ",     cost: 5, atk: 1200, hp: 1000, element: "red",   ability: "revenge", image: "images/omu.jpg" },
 
-  { name: "アメンボ",   cost: 1, atk: 200,  hp: 500,  element: "blue",  image: "images/amen.jpg" },
-  { name: "ゲンゴロウ", cost: 2, atk: 400,  hp: 700,  element: "blue",  image: "images/gengo.jpg" },
-  { name: "タガメ",     cost: 3, atk: 600,  hp: 1100, element: "blue",  image: "images/tagame.png" },
-  { name: "ミズカマキリ",cost: 4, atk: 900,  hp: 1500, element: "blue",  image: "images/mizu.png" },
- { name: "タランチュラ", cost: 5, atk: 1000, hp: 2000,  element: "blue",   image: "images/tara.jpg" },
+  { name: "アメンボ",   cost: 1, atk: 200,  hp: 500,  element: "blue",  ability: "draw",    image: "images/amen.jpg" },
+  { name: "ゲンゴロウ", cost: 2, atk: 400,  hp: 700,  element: "blue",  ability: "drain",   image: "images/gengo.jpg" },
+  { name: "タガメ",     cost: 3, atk: 600,  hp: 1000, element: "blue",  ability: "taunt",   image: "images/tagame.png" },
+  { name: "ミズカマキリ",cost: 4, atk: 900,  hp: 1500, element: "blue",  ability: "charge",  image: "images/mizu.png" },
+  { name: "タランチュラ",cost: 5, atk: 1000, hp: 1800, element: "blue",  ability: "revenge", image: "images/tara.jpg" },
 
-  { name: "バッタ",     cost: 1, atk: 300,  hp: 400,  element: "green", image: "images/bat.png" },
-  { name: "キリギリス", cost: 2, atk: 500,  hp: 500,  element: "green", image: "images/ki.png" },
-  { name: "カマキリ",   cost: 3, atk: 800,  hp: 800,  element: "green", image: "images/kama.png" },
-  { name: "オニヤンマ", cost: 4, atk: 1000, hp: 1000, element: "green", image: "images/oni.png" },
-   { name: "カミキリムシ", cost: 5, atk: 1400, hp: 1400,  element: "green",   image: "images/kami.jpg" },
-
+  { name: "バッタ",     cost: 1, atk: 300,  hp: 400,  element: "green", ability: "draw",    image: "images/bat.png" },
+  { name: "キリギリス", cost: 2, atk: 500,  hp: 500,  element: "green", ability: "drain",   image: "images/ki.png" },
+  { name: "カマキリ",   cost: 3, atk: 800,  hp: 800,  element: "green", ability: "charge",  image: "images/kama.png" },
+  { name: "オニヤンマ", cost: 4, atk: 1000, hp: 1000, element: "green", ability: "revenge", image: "images/oni.png" },
+  { name: "カミキリムシ", cost: 5, atk: 1200, hp: 1200, element: "green", ability: "taunt",   image: "images/kami.jpg" },
 ];
 
 let peer = null, conn = null;
@@ -389,6 +555,13 @@ function handleNetworkData(data) {
     sendState();
   } else if (data.type === 'SE') {
     playSE(data.se);
+  } else if (data.type === 'EMOTE') {
+    showEmoteBubble('opp-emote-bubble', data.text);
+  } else if (data.type === 'EFFECT_BUG') {
+    playAttackBugEffect(data.defenderId, data.damageText, data.isDestroyed);
+  } else if (data.type === 'EFFECT_HERO') {
+    const oppInfoBox = document.getElementById('opponent-info-box');
+    if (oppInfoBox) showDamageEffect(oppInfoBox, 'ライフ-1!');
   } else if (data.type === 'LEAVE_GAME') {
     alert("相手が退室しました。ロビーへ戻ります。");
     location.reload();
@@ -403,6 +576,7 @@ function createDeck() {
     deck.push({ 
       ...base, 
       maxHp: base.hp, 
+      ability: base.ability || null,
       id: myRole + '_' + (idCounter++) + '_' + Math.random().toString(36).substr(2, 4), 
       exhausted: false 
     });
@@ -453,6 +627,24 @@ function startTurn(role) {
   sendState();
 }
 
+function playAttackBugEffect(defenderId, damageText, isDestroyed) {
+  const cards = document.querySelectorAll('.card');
+  let targetCardEl = null;
+
+  cards.forEach(c => {
+    if (c.dataset.cardId === defenderId) {
+      targetCardEl = c;
+    }
+  });
+
+  if (targetCardEl) {
+    showDamageEffect(targetCardEl, damageText);
+    if (isDestroyed) {
+      shatterCard(targetCardEl);
+    }
+  }
+}
+
 function processAction(role, action, payload) {
   if (G.gameOver && action !== 'REMATCH') return;
   if (!G.gameOver && G.turn !== role && action !== 'SURRENDER') return;
@@ -467,21 +659,38 @@ function processAction(role, action, payload) {
     p.food.push(card);
     p.mana++;
     G.foodSetThisTurn = true;
-    log(`${role === myRole ? 'あなた' : '相手'}は[${card.name}]をエサ場に置いた`);
+    log(`${role === myRole ? 'あなた' : '相手'}は[${card.name}]をマナに置いた`);
   } 
   else if (action === 'PLAY_CARD') {
     let card = p.hand[payload.handIndex];
     if (p.mana >= card.cost) {
       p.mana -= card.cost;
       p.hand.splice(payload.handIndex, 1);
-      card.exhausted = false;
+
+      // ⚡ 速攻（charge）以外は召喚酔いが発生
+      card.exhausted = (card.ability !== 'charge');
       p.field.push(card);
-      log(`${role === myRole ? 'あなた' : '相手'}は[${card.name}]を召喚！`);
+
+      // ⚡ 1ドロー（draw）効果
+      if (card.ability === 'draw' && p.deck.length > 0) {
+        let drawn = p.deck.pop();
+        p.hand.push(drawn);
+        log(`${role === myRole ? 'あなた' : '相手'}は[${card.name}]を召喚！【1ドロー】！`);
+      } else {
+        log(`${role === myRole ? 'あなた' : '相手'}は[${card.name}]を召喚！`);
+      }
     }
   }
   else if (action === 'ATTACK_BUG') {
     let attacker = p.field.find(c => c.id === payload.attackerId);
     let defender = opp.field.find(c => c.id === payload.defenderId);
+
+    // ⚡ 挑発（taunt）チェック：相手の場に挑発カードがいる場合は挑発カードしか選択不可
+    let hasTaunt = opp.field.some(c => c.ability === 'taunt');
+    if (hasTaunt && defender.ability !== 'taunt') {
+      log("挑発（ガード）を持つカードを攻撃してください！");
+      return;
+    }
 
     if (attacker && defender && !attacker.exhausted) {
       attacker.exhausted = true;
@@ -490,21 +699,60 @@ function processAction(role, action, payload) {
       triggerSE('attack');
       defender.hp -= attAtk;
 
-      log(`[${attacker.name}]の攻撃！ ${defender.name}に${attAtk}ダメージ！`);
-
-      let hasDestroyed = false;
-      if (defender.hp <= 0) {
-        opp.field = opp.field.filter(c => c.id !== defender.id);
-        log(`相手の[${defender.name}]を撃破！`);
-        hasDestroyed = true;
+      // ⚡ 回復（drain）効果：攻撃時自身のHPを300回復
+      if (attacker.ability === 'drain') {
+        attacker.hp = Math.min(attacker.maxHp, attacker.hp + 300);
       }
 
-      if (hasDestroyed) {
+      let isDestroyed = defender.hp <= 0;
+      let dmgText = `-${attAtk}`;
+
+      // ⚡ 道連れ（revenge）効果
+      let isRevengeDestroyed = false;
+      if (isDestroyed && defender.ability === 'revenge') {
+        attacker.hp = 0;
+        isRevengeDestroyed = true;
+      }
+
+      playAttackBugEffect(defender.id, dmgText, isDestroyed);
+
+      if (conn && conn.open) {
+        conn.send({ 
+          type: 'EFFECT_BUG', 
+          defenderId: defender.id, 
+          damageText: dmgText, 
+          isDestroyed: isDestroyed 
+        });
+      }
+
+      log(`[${attacker.name}]の攻撃！ ${defender.name}に${attAtk}ダメージ！`);
+
+      if (isDestroyed) {
         setTimeout(() => triggerSE('destroy'), 150);
+        setTimeout(() => {
+          opp.field = opp.field.filter(c => c.id !== defender.id);
+
+          if (isRevengeDestroyed) {
+            playAttackBugEffect(attacker.id, "道連れ!", true);
+            p.field = p.field.filter(c => c.id !== attacker.id);
+            log(`[${defender.name}]の【道連れ】！ [${attacker.name}]も道連れ！`);
+          } else {
+            log(`相手の[${defender.name}]を撃破！`);
+          }
+          sendState();
+        }, 500);
+        return;
       }
     }
   }
   else if (action === 'ATTACK_HERO') {
+    // ⚡ 挑発カードがいる場合はダイレクトアタック不可
+    let hasTaunt = opp.field.some(c => c.ability === 'taunt');
+    if (hasTaunt) {
+      log("挑発を持つカードが存在するため直接攻撃できません！");
+      return;
+    }
+
     if (opp.field.length > 0) return;
 
     let attacker = p.field.find(c => c.id === payload.attackerId);
@@ -512,10 +760,17 @@ function processAction(role, action, payload) {
       attacker.exhausted = true;
       triggerSE('attack');
 
+      const oppInfoBox = document.getElementById('opponent-info-box');
+      if (oppInfoBox) showDamageEffect(oppInfoBox, 'ライフ-1!');
+
+      if (conn && conn.open) {
+        conn.send({ type: 'EFFECT_HERO' });
+      }
+
       if (opp.territory.length > 0) {
         let taken = opp.territory.pop();
         opp.hand.push(taken);
-        log(`本体攻撃成功！[${attacker.name}]が縄張りを1枚削った！`);
+        log(`本体攻撃成功！[${attacker.name}]がライフを1枚削った！`);
       } else {
         triggerSE('destroy');
         G.gameOver = true;
@@ -636,14 +891,14 @@ function render() {
         cardEl.style.transform = `translateY(${-liftY}px) rotate(${angle}deg)`;
       }
 
-      cardEl.onclick = (e) => {
-        e.stopPropagation();
+      attachCardInteraction(cardEl, card, () => {
         if (!isMyTurn || G.gameOver) return;
         selectedHandIndex = (selectedHandIndex === idx) ? null : idx;
         selectedAttackerCardId = null;
         render();
         toggleActionModal();
-      };
+      });
+
       handEl.appendChild(cardEl);
     });
   }
@@ -654,14 +909,15 @@ function render() {
     me.field.forEach(card => {
       let cardEl = createCardEl(card, false);
       if (card.id === selectedAttackerCardId) cardEl.classList.add('selected');
-      cardEl.onclick = (e) => {
-        e.stopPropagation();
+
+      attachCardInteraction(cardEl, card, () => {
         if (!isMyTurn || card.exhausted || G.gameOver) return;
         selectedAttackerCardId = (selectedAttackerCardId === card.id) ? null : card.id;
         selectedHandIndex = null;
         toggleActionModal();
         render();
-      };
+      });
+
       myFieldEl.appendChild(cardEl);
     });
   }
@@ -671,15 +927,19 @@ function render() {
     oppFieldEl.innerHTML = '';
     opp.field.forEach(card => {
       let cardEl = createCardEl(card, false);
-      if (selectedAttackerCardId && !G.gameOver) {
-        cardEl.classList.add('targetable-hero');
-        cardEl.onclick = (e) => {
-          e.stopPropagation();
+
+      attachCardInteraction(cardEl, card, () => {
+        if (selectedAttackerCardId && !G.gameOver) {
           sendAction('ATTACK_BUG', { attackerId: selectedAttackerCardId, defenderId: card.id });
           selectedAttackerCardId = null;
           render();
-        };
+        }
+      });
+
+      if (selectedAttackerCardId && !G.gameOver) {
+        cardEl.classList.add('targetable-hero');
       }
+
       oppFieldEl.appendChild(cardEl);
     });
   }
@@ -766,8 +1026,17 @@ function renderFoodZone(elementId, cardArray, availableMana) {
 function createCardEl(card, isFood = false) {
   const el = document.createElement('div');
   el.className = `card ${card.element} ${card.exhausted ? 'exhausted' : ''}`;
+  el.dataset.cardId = card.id;
   
   const elemText = { red: '赤', blue: '青', green: '緑' }[card.element];
+
+  const abilityLabels = {
+    taunt: "挑発",
+    charge: "速攻",
+    revenge: "道連れ",
+    drain: "回復",
+    draw: "1ドロー"
+  };
 
   if (isFood) {
     el.innerHTML = `
@@ -779,9 +1048,14 @@ function createCardEl(card, isFood = false) {
     `;
   } else {
     const hpColor = (card.hp < card.maxHp) ? '#e63946' : '#2a9d8f';
+    const abilityHtml = card.ability 
+      ? `<div class="card-ability ${card.ability}">${abilityLabels[card.ability]}</div>`
+      : `<div></div>`;
+
     el.innerHTML = `
       <div class="card-header">
         <div class="card-cost">${card.cost}</div>
+        ${abilityHtml}
         <div class="card-element">${elemText}</div>
       </div>
       <img class="card-img" src="${card.image}" alt="${card.name}">
