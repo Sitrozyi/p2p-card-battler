@@ -44,39 +44,76 @@ body {
 }
 
 /* --------------------------------------------------
-   ロビー画面
+   ロビー画面 ＆ アバター選択
 -------------------------------------------------- */
 #lobby {
   background: linear-gradient(145deg, #18221a, #101611);
-  padding: 2rem;
+  padding: 1.8rem;
   border-radius: 16px;
   border: 1px solid var(--panel-border);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 20px var(--gold-glow);
   text-align: center;
   width: 90%;
-  max-width: 400px;
+  max-width: 420px;
 }
 
 #lobby h1 {
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.8rem;
   color: var(--gold-primary);
   font-size: 1.6rem;
   text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 10px var(--gold-glow);
   letter-spacing: 2px;
 }
 
-.lobby-section { margin: 1.2rem 0; }
+.lobby-section { margin: 1rem 0; }
+
+.avatar-select-title {
+  font-size: 0.82rem;
+  color: var(--gold-light);
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+.avatar-list {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.avatar-option {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #0b100c;
+  object-fit: cover;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+
+.avatar-option:hover {
+  transform: scale(1.1);
+  border-color: var(--gold-light);
+}
+
+.avatar-option.selected {
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 12px var(--gold-primary), 0 0 4px #fff;
+  transform: scale(1.15);
+}
 
 input[type="text"] {
   width: 100%;
-  padding: 12px;
-  margin: 8px 0;
+  padding: 10px;
+  margin: 6px 0;
   border-radius: 8px;
   border: 1px solid rgba(212, 175, 55, 0.3);
   background: #0b100c;
   color: #fff;
   text-align: center;
-  font-size: 1rem;
+  font-size: 0.95rem;
   outline: none;
 }
 
@@ -84,12 +121,12 @@ button {
   background: linear-gradient(180deg, #e6c875 0%, #b8860b 100%);
   color: #0d120e;
   border: 1px solid #ffe89c;
-  padding: 12px 18px;
+  padding: 10px 16px;
   font-weight: bold;
   border-radius: 8px;
   cursor: pointer;
   width: 100%;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   transition: all 0.2s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
@@ -107,7 +144,7 @@ button:disabled {
 }
 
 #copy-id-container {
-  margin-top: 10px;
+  margin-top: 8px;
   display: none;
 }
 
@@ -115,9 +152,9 @@ button:disabled {
   background: #0d140e;
   border: 1px solid var(--gold-primary);
   color: var(--gold-light);
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 8px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   cursor: pointer;
   word-break: break-all;
 }
@@ -150,15 +187,32 @@ button:disabled {
   background: rgba(212, 175, 55, 0.03);
 }
 
+/* プレイヤー情報＆丸型アバター配置 */
 .player-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(212, 175, 55, 0.15);
-  padding: 4px 10px;
-  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  padding: 4px 8px;
+  border-radius: 8px;
   font-size: 0.78rem;
+}
+
+.player-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold-primary);
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.5);
+  object-fit: cover;
+  background: #000;
 }
 
 .area.active-turn .player-info {
@@ -231,20 +285,23 @@ button:disabled {
   border-color: #444 !important;
 }
 
+/* センタールーム & サレンダーボタン */
 #center-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 10px;
+  padding: 4px 8px;
   background: linear-gradient(90deg, rgba(0,0,0,0.85), rgba(20,28,22,0.95), rgba(0,0,0,0.85));
   border-top: 1px solid var(--panel-border);
   border-bottom: 1px solid var(--panel-border);
+  gap: 6px;
 }
 
 #log {
   font-size: 0.75rem;
   color: var(--text-gold);
-  max-width: 65%;
+  flex: 1;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -252,8 +309,22 @@ button:disabled {
 
 #btn-end-turn {
   width: auto;
-  padding: 6px 12px;
-  font-size: 0.8rem;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+}
+
+.btn-surrender {
+  width: auto;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  background: linear-gradient(180deg, #601414 0%, #300808 100%);
+  color: #f87171;
+  border: 1px solid #991b1b;
+  box-shadow: none;
+}
+.btn-surrender:hover {
+  background: linear-gradient(180deg, #831818 0%, #450a0a 100%);
+  color: #fff;
 }
 
 .hand-zone {
@@ -266,7 +337,7 @@ button:disabled {
 }
 
 /* --------------------------------------------------
-   カードのデザイン（数値の見切れ完全防護）
+   カードのデザイン
 -------------------------------------------------- */
 .card {
   width: var(--card-width);
@@ -298,7 +369,6 @@ button:disabled {
   border-color: rgba(42, 157, 143, 0.8);
 }
 
-/* 選択・浮き上がり */
 .card.selected {
   transform: translateY(-16px) scale(1.08) !important;
   border-color: var(--gold-light) !important;
@@ -384,7 +454,7 @@ button:disabled {
 .card-hp { color: #2a9d8f; }
 
 /* --------------------------------------------------
-   アクションポップアップ（中央モーダル）
+   アクションポップアップ
 -------------------------------------------------- */
 #action-modal {
   position: fixed;

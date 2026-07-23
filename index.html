@@ -18,6 +18,13 @@
   <!-- ロビー画面 -->
   <div id="lobby">
     <h1>蟲カードバトル</h1>
+
+    <!-- プレイヤーアイコン選択 -->
+    <div class="lobby-section">
+      <div class="avatar-select-title">アイコンを選択</div>
+      <div id="avatar-list" class="avatar-list"></div>
+    </div>
+
     <div class="lobby-section">
       <button id="btn-create">部屋を作成（ホスト）</button>
       <div id="copy-id-container">
@@ -25,7 +32,7 @@
         <div id="host-id-btn" class="copy-btn">ID生成中...</div>
       </div>
     </div>
-    <hr style="border-color:#444;">
+    <hr style="border-color: rgba(212, 175, 55, 0.2);">
     <div class="lobby-section">
       <input type="text" id="join-id" placeholder="相手のIDを入力">
       <button id="btn-join">部屋に入る（ゲスト）</button>
@@ -38,8 +45,11 @@
     <!-- 相手エリア -->
     <div class="area" id="opponent-area">
       <div class="player-info" id="opponent-info-box">
-        <div>
-          相手 [デッキ:<span id="opp-deck">0</span> 手札:<span id="opp-hand-count">0</span>]
+        <div class="player-profile">
+          <img id="opp-avatar-img" class="player-avatar" src="" alt="相手アイコン">
+          <div>
+            相手 [デッキ:<span id="opp-deck">0</span> 手札:<span id="opp-hand-count">0</span>]
+          </div>
         </div>
         <div class="territory-zone" id="opp-territory"></div>
       </div>
@@ -54,6 +64,7 @@
 
     <!-- 中央操作バー -->
     <div id="center-bar">
+      <button id="btn-surrender" class="btn-surrender">サレンダー</button>
       <div id="log">対戦開始！</div>
       <button id="btn-end-turn">ターン終了</button>
     </div>
@@ -68,8 +79,11 @@
         <div class="food-zone" id="my-food"></div>
       </div>
       <div class="player-info">
-        <div>
-          自分 [デッキ:<span id="my-deck">0</span>]
+        <div class="player-profile">
+          <img id="my-avatar-img" class="player-avatar" src="" alt="自分アイコン">
+          <div>
+            自分 [デッキ:<span id="my-deck">0</span>]
+          </div>
         </div>
         <div class="territory-zone" id="my-territory"></div>
       </div>
@@ -77,7 +91,7 @@
       <div class="hand-zone" id="my-hand"></div>
     </div>
 
-    <!-- アクション選択ポップアップ (モーダル背景付き) -->
+    <!-- アクション選択ポップアップ -->
     <div id="action-modal" class="hidden">
       <div class="action-modal-content">
         <div class="action-modal-title" id="action-modal-card-name">カード選択</div>

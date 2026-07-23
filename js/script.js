@@ -1,3 +1,18 @@
+// --- icon/ フォルダ内の自作画像定義 ---
+// ご自身のアイコン画像に合わせてファイル名や数を自由に変更・追加できます
+const AVATAR_PRESETS = [
+  { id: 'icon1', name: 'アイコン1', src: 'icon/1.png' },
+  { id: 'icon2', name: 'アイコン2', src: 'icon/2.png' },
+  { id: 'icon3', name: 'アイコン3', src: 'icon/3.png' },
+  { id: 'icon4', name: 'アイコン4', src: 'icon/4.png' },
+  { id: 'icon5', name: 'アイコン5', src: 'icon/5.png' }
+];
+
+// 画像が読み込めなかった場合のフォールバック（予備）画像
+const DEFAULT_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%231f2937'/><circle cx='50' cy='35' r='18' fill='%23d4af37'/><path d='M20 85 Q50 55 80 85 Z' fill='%23d4af37'/></svg>";
+
+let selectedAvatarIndex = 0;
+
 // --- Web Audio API 効果音 ---
 let audioCtx = null;
 
@@ -52,18 +67,18 @@ function triggerSE(type) {
 
 // --- カード定義データ ---
 const CARD_DATA = [
-  { name: "アリ", cost: 1, atk: 400, hp: 500, element: "red", image: "images/ant.jpg" },
-  { name: "クワガタ", cost: 2, atk: 400, hp: 800, element: "red", image: "images/kuwagata.jpg" },
-  { name: "カブトムシ", cost: 3, atk: 500, hp: 1000, element: "red", image: "images/kabuto.jpg" },
-  { name: "スズメバチ", cost: 4, atk: 900, hp: 1200, element: "red", image: "images/suzu.jpg" },
+  { name: "アリ", cost: 1, atk: 700, hp: 500, element: "red", image: "images/ant.jpg" },
+  { name: "クワガタ", cost: 2, atk: 1300, hp: 800, element: "red", image: "images/kuwagata.jpg" },
+  { name: "カブトムシ", cost: 3, atk: 1800, hp: 1300, element: "red", image: "images/kabuto.jpg" },
+  { name: "スズメバチ", cost: 4, atk: 2500, hp: 1800, element: "red", image: "images/suzu.jpg" },
   { name: "アメンボ", cost: 1, atk: 400, hp: 800, element: "blue", image: "images/amen.jpg" },
   { name: "ゲンゴロウ", cost: 2, atk: 800, hp: 1300, element: "blue", image: "images/gengo.jpg" },
-  { name: "タガメ", cost: 3, atk: 500, hp: 1300, element: "blue", image: "images/tagame.png" },
-  { name: "ミズカマキリ", cost: 4, atk: 700, hp: 1100, element: "blue", image: "images/mizu.png" },
+  { name: "タガメ", cost: 3, atk: 1200, hp: 2000, element: "blue", image: "images/tagame.png" },
+  { name: "ミズカマキリ", cost: 4, atk: 1700, hp: 2700, element: "blue", image: "images/mizu.png" },
   { name: "バッタ", cost: 1, atk: 600, hp: 600, element: "green", image: "images/bat.png" },
-  { name: "キリギリス", cost: 2, atk: 400, hp: 600, element: "green", image: "images/ki.png" },
-  { name: "カマキリ", cost: 3, atk: 600, hp: 900, element: "green", image: "images/kama.png" },
-  { name: "オニヤンマ", cost: 4, atk: 1000, hp: 1500, element: "green", image: "images/oni.png" },
+  { name: "キリギリス", cost: 2, atk: 1000, hp: 1000, element: "green", image: "images/ki.png" },
+  { name: "カマキリ", cost: 3, atk: 1500, hp: 1500, element: "green", image: "images/kama.png" },
+  { name: "オニヤンマ", cost: 4, atk: 2100, hp: 2200, element: "green", image: "images/oni.png" },
 ];
 
 // --- ゲーム状態変数 ---
@@ -80,10 +95,36 @@ let G = {
   winner: null,
   rematchState: { host: false, guest: false },
   players: {
-    host: { deck: [], hand: [], field: [], food: [], mana: 0, territory: [] },
-    guest: { deck: [], hand: [], field: [], food: [], mana: 0, territory: [] }
+    host: { deck: [], hand: [], field: [], food: [], mana: 0, territory: [], avatar: '' },
+    guest: { deck: [], hand: [], field: [], food: [], mana: 0, territory: [], avatar: '' }
   }
 };
+
+// --- ロビーアバター一覧生成 ---
+function initAvatarSelection() {
+  const container = document.getElementById('avatar-list');
+  container.innerHTML = '';
+  AVATAR_PRESETS.forEach((av, idx) => {
+    let img = document.createElement('img');
+    img.src = av.src;
+    img.className = `avatar-option ${idx === selectedAvatarIndex ? 'selected' : ''}`;
+    img.title = av.name;
+    // 画像未配置時のエラーハンドリング
+    img.onerror = function() {
+      this.onerror = null;
+      this.src = DEFAULT_FALLBACK_SVG;
+    };
+    img.onclick = () => {
+      selectedAvatarIndex = idx;
+      document.querySelectorAll('.avatar-option').forEach((el, i) => {
+        if (i === idx) el.classList.add('selected');
+        else el.classList.remove('selected');
+      });
+    };
+    container.appendChild(img);
+  });
+}
+initAvatarSelection();
 
 // --- PeerJS 接続処理 ---
 const btnCreate = document.getElementById('btn-create');
@@ -166,8 +207,16 @@ function setupConnection() {
     statusMsg.innerText = "接続成功！ゲームを開始します...";
     document.getElementById('lobby').classList.add('hidden');
     document.getElementById('game-board').classList.remove('hidden');
+
     if (isHost) {
+      G.players.host.avatar = AVATAR_PRESETS[selectedAvatarIndex].src;
       initGame();
+    } else {
+      conn.send({ 
+        type: 'SET_AVATAR', 
+        role: 'guest', 
+        avatar: AVATAR_PRESETS[selectedAvatarIndex].src 
+      });
     }
   });
 
@@ -202,6 +251,9 @@ function handleNetworkData(data) {
     render();
   } else if (data.type === 'ACTION' && isHost) {
     processAction(data.role, data.action, data.payload);
+  } else if (data.type === 'SET_AVATAR' && isHost) {
+    G.players[data.role].avatar = data.avatar;
+    sendState();
   } else if (data.type === 'SE') {
     playSE(data.se);
   } else if (data.type === 'LEAVE_GAME') {
@@ -271,7 +323,7 @@ function startTurn(role) {
 
 function processAction(role, action, payload) {
   if (G.gameOver && action !== 'REMATCH') return;
-  if (!G.gameOver && G.turn !== role) return;
+  if (!G.gameOver && G.turn !== role && action !== 'SURRENDER') return;
 
   let p = G.players[role];
   let oppRole = role === 'host' ? 'guest' : 'host';
@@ -321,6 +373,9 @@ function processAction(role, action, payload) {
     }
   }
   else if (action === 'ATTACK_HERO') {
+    // 相手の場に虫がいる場合は直接攻撃不可
+    if (opp.field.length > 0) return;
+
     let attacker = p.field.find(c => c.id === payload.attackerId);
     if (attacker && !attacker.exhausted) {
       attacker.exhausted = true;
@@ -337,6 +392,12 @@ function processAction(role, action, payload) {
         log(`決着！ ${role === myRole ? 'あなた' : '相手'}の勝利！`);
       }
     }
+  }
+  else if (action === 'SURRENDER') {
+    triggerSE('destroy');
+    G.gameOver = true;
+    G.winner = oppRole;
+    log(`${role === myRole ? 'あなた' : '相手'}がサレンダーしました。`);
   }
   else if (action === 'END_TURN') {
     startTurn(oppRole);
@@ -369,12 +430,22 @@ function log(msg) {
   document.getElementById('log').innerText = msg;
 }
 
-// --- レンダリング (UI描画・演出更新) ---
+// --- レンダリング ---
 function render() {
   let isMyTurn = G.turn === myRole;
   let me = G.players[myRole];
   let oppRole = myRole === 'host' ? 'guest' : 'host';
   let opp = G.players[oppRole];
+
+  // アバター表示更新（エラーハンドリング付き）
+  const myAvEl = document.getElementById('my-avatar-img');
+  const oppAvEl = document.getElementById('opp-avatar-img');
+  
+  if (me.avatar) myAvEl.src = me.avatar;
+  myAvEl.onerror = function() { this.onerror = null; this.src = DEFAULT_FALLBACK_SVG; };
+
+  if (opp.avatar) oppAvEl.src = opp.avatar;
+  oppAvEl.onerror = function() { this.onerror = null; this.src = DEFAULT_FALLBACK_SVG; };
 
   // ターン発光エリア設定
   const myAreaEl = document.getElementById('my-area');
@@ -407,7 +478,7 @@ function render() {
   renderFoodZone('my-food', me.food, me.mana);
   renderFoodZone('opp-food', opp.food, opp.mana);
 
-  // 手札（扇状配置 ＆ タップ操作）
+  // 手札
   const handEl = document.getElementById('my-hand');
   handEl.innerHTML = '';
   const handCount = me.hand.length;
@@ -475,9 +546,9 @@ function render() {
     oppFieldEl.appendChild(cardEl);
   });
 
-  // 相手本体への攻撃
+  // 相手本体への攻撃（相手フィールドが空の時のみ対象可能）
   const oppInfoBox = document.getElementById('opponent-info-box');
-  if (selectedAttackerCardId && !G.gameOver) {
+  if (selectedAttackerCardId && !G.gameOver && opp.field.length === 0) {
     oppInfoBox.classList.add('targetable-hero');
     oppInfoBox.onclick = (e) => {
       e.stopPropagation();
@@ -490,7 +561,7 @@ function render() {
     oppInfoBox.onclick = null;
   }
 
-  // リザルト画面の描画制御
+  // リザルト画面
   const resultModal = document.getElementById('result-modal');
   if (G.gameOver && G.winner) {
     resultModal.classList.remove('hidden');
@@ -615,7 +686,16 @@ document.getElementById('btn-end-turn').onclick = () => {
   sendAction('END_TURN');
 };
 
-// リザルト画面操作
+document.getElementById('btn-surrender').onclick = () => {
+  if (G.gameOver) return;
+  if (confirm("本当にサレンダー（降参）しますか？")) {
+    selectedHandIndex = null;
+    selectedAttackerCardId = null;
+    toggleActionModal();
+    sendAction('SURRENDER');
+  }
+};
+
 document.getElementById('btn-rematch').onclick = () => {
   sendAction('REMATCH');
 };
