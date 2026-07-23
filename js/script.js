@@ -76,6 +76,9 @@ let selectedAttackerCardId = null;
 let G = {
   turn: 'host',
   foodSetThisTurn: false,
+  gameOver: false,
+  winner: null,
+  rematchState: { host: false, guest: false },
   players: {
     host: { deck: [], hand: [], field: [], food: [], mana: 0, territory: [] },
     guest: { deck: [], hand: [], field: [], food: [], mana: 0, territory: [] }
@@ -201,6 +204,9 @@ function handleNetworkData(data) {
     processAction(data.role, data.action, data.payload);
   } else if (data.type === 'SE') {
     playSE(data.se);
+  } else if (data.type === 'LEAVE_GAME') {
+    alert("相手が退室しました。ロビーへ戻ります。");
+    location.reload();
   }
 }
 
@@ -228,11 +234,17 @@ function initGame() {
   G.players.host.hand = hostDeck.splice(0, 4);
   G.players.host.deck = hostDeck;
   G.players.host.food = [];
+  G.players.host.field = [];
 
   G.players.guest.territory = guestDeck.splice(0, 6);
   G.players.guest.hand = guestDeck.splice(0, 4);
   G.players.guest.deck = guestDeck;
   G.players.guest.food = [];
+  G.players.guest.field = [];
+
+  G.gameOver = false;
+  G.winner = null;
+  G.rematchState = { host: false, guest: false };
 
   G.turn = 'host';
   startTurn('host');
@@ -259,7 +271,8 @@ function startTurn(role) {
 }
 
 function processAction(role, action, payload) {
-  if (G.turn !== role) return;
+  if (G.gameOver && action !== 'REMATCH') return;
+  if (!G.gameOver && G.turn !== role) return;
 
   let p = G.players[role];
   let oppRole = role === 'host' ? 'guest' : 'host';
@@ -322,14 +335,23 @@ function processAction(role, action, payload) {
         log(`本体攻撃成功！[${attacker.name}]が縄張りを1枚削った！`);
       } else {
         triggerSE('destroy');
+        G.gameOver = true;
+        G.winner = role;
         log(`決着！ ${role === myRole ? 'あなた' : '相手'}の勝利！`);
-        alert(`${role === myRole ? '勝利！' : '敗北...'}`);
       }
     }
   }
   else if (action === 'END_TURN') {
     startTurn(oppRole);
     return;
+  }
+  else if (action === 'REMATCH') {
+    G.rematchState[role] = true;
+    // 両者が再戦を選択した場合は新ゲーム開始
+    if (G.rematchState.host && G.rematchState.guest) {
+      initGame();
+      return;
+    }
   }
 
   sendState();
@@ -361,12 +383,15 @@ function render() {
   // ターン発光エリア設定
   const myAreaEl = document.getElementById('my-area');
   const oppAreaEl = document.getElementById('opponent-area');
-  if (isMyTurn) {
+  if (isMyTurn && !G.gameOver) {
     myAreaEl.classList.add('active-turn');
     oppAreaEl.classList.remove('active-turn');
-  } else {
+  } else if (!G.gameOver) {
     oppAreaEl.classList.add('active-turn');
     myAreaEl.classList.remove('active-turn');
+  } else {
+    myAreaEl.classList.remove('active-turn');
+    oppAreaEl.classList.remove('active-turn');
   }
 
   document.getElementById('my-mana').innerText = me.mana;
@@ -378,7 +403,7 @@ function render() {
   document.getElementById('opp-hand-count').innerText = opp.hand.length;
 
   const btnEnd = document.getElementById('btn-end-turn');
-  btnEnd.disabled = !isMyTurn;
+  btnEnd.disabled = !isMyTurn || G.gameOver;
 
   renderTerritory('my-territory', me.territory.length);
   renderTerritory('opp-territory', opp.territory.length);
@@ -395,8 +420,7 @@ function render() {
   me.hand.forEach((card, idx) => {
     let cardEl = createCardEl(card);
 
-    // 自分のターン ＆ コストが足りる場合は輝き（パルス）アニメーション
-    if (isMyTurn && me.mana >= card.cost) {
+    if (isMyTurn && me.mana >= card.cost && !G.gameOver) {
       cardEl.classList.add('playable');
     }
 
@@ -404,16 +428,15 @@ function render() {
       cardEl.classList.add('selected');
     }
 
-    // 手札の扇形（アーチ状）配置計算
     if (handCount > 1) {
       const mid = (handCount - 1) / 2;
-      const angle = (idx - mid) * 5; // 傾き角度
-      const offsetY = Math.abs(idx - mid) * 3; // 上下オフセット
+      const angle = (idx - mid) * 5;
+      const offsetY = Math.abs(idx - mid) * 3;
       cardEl.style.transform = `translateY(${offsetY}px) rotate(${angle}deg)`;
     }
 
     cardEl.onclick = () => {
-      if (!isMyTurn) return;
+      if (!isMyTurn || G.gameOver) return;
       selectedHandIndex = (selectedHandIndex === idx) ? null : idx;
       selectedAttackerCardId = null;
       render();
@@ -429,7 +452,7 @@ function render() {
     let cardEl = createCardEl(card);
     if (card.id === selectedAttackerCardId) cardEl.classList.add('selected');
     cardEl.onclick = () => {
-      if (!isMyTurn || card.exhausted) return;
+      if (!isMyTurn || card.exhausted || G.gameOver) return;
       selectedAttackerCardId = (selectedAttackerCardId === card.id) ? null : card.id;
       selectedHandIndex = null;
       toggleActionModal();
@@ -443,7 +466,7 @@ function render() {
   oppFieldEl.innerHTML = '';
   opp.field.forEach(card => {
     let cardEl = createCardEl(card);
-    if (selectedAttackerCardId) {
+    if (selectedAttackerCardId && !G.gameOver) {
       cardEl.classList.add('targetable-hero');
       cardEl.onclick = () => {
         sendAction('ATTACK_BUG', { attackerId: selectedAttackerCardId, defenderId: card.id });
@@ -454,9 +477,9 @@ function render() {
     oppFieldEl.appendChild(cardEl);
   });
 
-  // 相手プレイヤー（本体へのダイレクトアタック指定）
+  // 相手プレイヤー（本体攻撃）
   const oppInfoBox = document.getElementById('opponent-info-box');
-  if (selectedAttackerCardId) {
+  if (selectedAttackerCardId && !G.gameOver) {
     oppInfoBox.classList.add('targetable-hero');
     oppInfoBox.onclick = () => {
       sendAction('ATTACK_HERO', { attackerId: selectedAttackerCardId });
@@ -466,6 +489,44 @@ function render() {
   } else {
     oppInfoBox.classList.remove('targetable-hero');
     oppInfoBox.onclick = null;
+  }
+
+  // --- ゲーム終了（リザルト画面）のレンダリング ---
+  const resultModal = document.getElementById('result-modal');
+  if (G.gameOver) {
+    resultModal.classList.remove('hidden');
+    const titleEl = document.getElementById('result-title');
+    const msgEl = document.getElementById('result-msg');
+    const statusEl = document.getElementById('rematch-status');
+    const btnRematch = document.getElementById('btn-rematch');
+
+    const isWinner = G.winner === myRole;
+    if (isWinner) {
+      titleEl.innerText = 'VICTORY';
+      titleEl.className = 'victory';
+      msgEl.innerText = 'あなたの勝利です！';
+    } else {
+      titleEl.innerText = 'DEFEAT';
+      titleEl.className = 'defeat';
+      msgEl.innerText = '敗北しました...';
+    }
+
+    // 再戦リクエストのステータス表示
+    const myRematch = G.rematchState[myRole];
+    const oppRematch = G.rematchState[oppRole];
+
+    if (myRematch && !oppRematch) {
+      btnRematch.disabled = true;
+      statusEl.innerText = '相手の回答を待っています...';
+    } else if (!myRematch && oppRematch) {
+      btnRematch.disabled = false;
+      statusEl.innerText = '相手が再戦を希望しています！';
+    } else {
+      btnRematch.disabled = false;
+      statusEl.innerText = '';
+    }
+  } else {
+    resultModal.classList.add('hidden');
   }
 }
 
@@ -479,13 +540,11 @@ function renderTerritory(elementId, count) {
   }
 }
 
-// エサ場カード描画（マナ消費状況に応じてグレー化）
 function renderFoodZone(elementId, cardArray, availableMana) {
   const el = document.getElementById(elementId);
   el.innerHTML = '';
   cardArray.forEach((card, idx) => {
     let cardEl = createCardEl(card);
-    // 未使用マナ分を超えたエサは消費済み(food-used)とする
     if (idx >= availableMana) {
       cardEl.classList.add('food-used');
     }
@@ -517,7 +576,7 @@ function createCardEl(card) {
 
 function toggleActionModal() {
   const modal = document.getElementById('action-modal');
-  if (selectedHandIndex !== null) {
+  if (selectedHandIndex !== null && !G.gameOver) {
     modal.classList.remove('hidden');
     document.getElementById('btn-act-food').disabled = G.foodSetThisTurn;
     let card = G.players[myRole].hand[selectedHandIndex];
@@ -555,4 +614,16 @@ document.getElementById('btn-end-turn').onclick = () => {
   selectedAttackerCardId = null;
   toggleActionModal();
   sendAction('END_TURN');
+};
+
+// リザルト画面操作
+document.getElementById('btn-rematch').onclick = () => {
+  sendAction('REMATCH');
+};
+
+document.getElementById('btn-home').onclick = () => {
+  if (conn && conn.open) {
+    conn.send({ type: 'LEAVE_GAME' });
+  }
+  location.reload();
 };
