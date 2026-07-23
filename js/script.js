@@ -1,3 +1,52 @@
+// --- BGM 設定 ---
+const BGM_PATH = 'music/1.mp3'; // music/ フォルダ内の音源を指定
+let bgmAudio = new Audio(BGM_PATH);
+bgmAudio.loop = true;
+bgmAudio.volume = 0.4; // 音量 (0.0 〜 1.0)
+let isBgmPlaying = false;
+
+// 初回画面タップ時にBGM自動再生（ブラウザの自動再生制限対策）
+function initBGMOnFirstTouch() {
+  const startBgm = () => {
+    playBGM();
+    document.removeEventListener('click', startBgm);
+    document.removeEventListener('touchstart', startBgm);
+  };
+  document.addEventListener('click', startBgm);
+  document.addEventListener('touchstart', startBgm);
+}
+
+function playBGM() {
+  if (!isBgmPlaying) {
+    bgmAudio.play().then(() => {
+      isBgmPlaying = true;
+      updateBgmBtn();
+    }).catch(e => {
+      console.log("BGM Autoplay prevented:", e);
+    });
+  }
+}
+
+// BGM ON/OFF 切替
+window.toggleBGM = function() {
+  const btn = document.getElementById('btn-bgm-toggle');
+  if (isBgmPlaying) {
+    bgmAudio.pause();
+    isBgmPlaying = false;
+  } else {
+    bgmAudio.play();
+    isBgmPlaying = true;
+  }
+  updateBgmBtn();
+};
+
+function updateBgmBtn() {
+  const btn = document.getElementById('btn-bgm-toggle');
+  if (btn) {
+    btn.innerText = isBgmPlaying ? '🎵 BGM: ON' : '🔇 BGM: OFF';
+  }
+}
+
 // --- icon/ フォルダ内の自作画像定義 ---
 const AVATAR_PRESETS = [
   { id: 'icon1', name: 'アイコン1', src: 'icon/1.png' },
@@ -68,19 +117,23 @@ function triggerSE(type) {
 // --- カード定義データ ---
 const CARD_DATA = [
   { name: "アリ",       cost: 1, atk: 400,  hp: 300,  element: "red",   image: "images/ant.jpg" },
-  { name: "クワガタ",   cost: 2, atk: 700,  hp: 500,  element: "red",   image: "images/kuwagata.jpg" },
-  { name: "カブトムシ", cost: 3, atk: 1000, hp: 700,  element: "red",   image: "images/kabuto.jpg" },
-  { name: "スズメバチ", cost: 4, atk: 1400, hp: 900,  element: "red",   image: "images/suzu.jpg" },
+  { name: "クワガタ",   cost: 2, atk: 600,  hp: 500,  element: "red",   image: "images/kuwagata.jpg" },
+  { name: "カブトムシ", cost: 3, atk: 600, hp: 700,  element: "red",   image: "images/kabuto.jpg" },
+  { name: "スズメバチ", cost: 4, atk: 1000, hp: 900,  element: "red",   image: "images/suzu.jpg" },
+ { name: "オオムカデ", cost: 4, atk: 1500, hp: 1200,  element: "red",   image: "images/omu.jpg" },
 
   { name: "アメンボ",   cost: 1, atk: 200,  hp: 500,  element: "blue",  image: "images/amen.jpg" },
   { name: "ゲンゴロウ", cost: 2, atk: 400,  hp: 700,  element: "blue",  image: "images/gengo.jpg" },
   { name: "タガメ",     cost: 3, atk: 600,  hp: 1100, element: "blue",  image: "images/tagame.png" },
   { name: "ミズカマキリ",cost: 4, atk: 900,  hp: 1500, element: "blue",  image: "images/mizu.png" },
+ { name: "タランチュラ", cost: 5, atk: 1000, hp: 2000,  element: "blue",   image: "images/tara.jpg" },
 
   { name: "バッタ",     cost: 1, atk: 300,  hp: 400,  element: "green", image: "images/bat.png" },
   { name: "キリギリス", cost: 2, atk: 500,  hp: 500,  element: "green", image: "images/ki.png" },
   { name: "カマキリ",   cost: 3, atk: 800,  hp: 800,  element: "green", image: "images/kama.png" },
-  { name: "オニヤンマ", cost: 4, atk: 1100, hp: 1100, element: "green", image: "images/oni.png" },
+  { name: "オニヤンマ", cost: 4, atk: 1000, hp: 1000, element: "green", image: "images/oni.png" },
+   { name: "カミキリムシ", cost: 5, atk: 1400, hp: 1400,  element: "green",   image: "images/kami.jpg" },
+
 ];
 
 let peer = null, conn = null;
@@ -125,8 +178,9 @@ function initAvatarSelection() {
   });
 }
 
-// ★ 部屋作成関数 (ボタン押下時に即時「ID生成中...」枠を表示) ★
+// 部屋作成関数
 window.createRoom = function() {
+  playBGM();
   const btnCreate = document.getElementById('btn-create');
   const statusMsg = document.getElementById('status-msg');
   const copyIdBtn = document.getElementById('host-id-btn');
@@ -134,7 +188,6 @@ window.createRoom = function() {
 
   if (btnCreate) btnCreate.disabled = true;
 
-  // ボタンを押した瞬間に「ID生成中...」枠を即時表示
   if (copyIdContainer) copyIdContainer.style.display = 'block';
   if (copyIdBtn) copyIdBtn.innerText = "ID生成中...";
   if (statusMsg) {
@@ -160,7 +213,6 @@ window.createRoom = function() {
     try { peer.destroy(); } catch(e) {}
   }
 
-  // 6桁の数字IDを割り当てて初期化
   const roomId = String(Math.floor(100000 + Math.random() * 900000));
 
   try {
@@ -215,8 +267,9 @@ window.createRoom = function() {
   });
 };
 
-// ★ 部屋参加関数 ★
+// 部屋参加関数
 window.joinRoom = function() {
+  playBGM();
   const btnJoin = document.getElementById('btn-join');
   const joinInput = document.getElementById('join-id');
   const statusMsg = document.getElementById('status-msg');
@@ -702,7 +755,6 @@ function renderFoodZone(elementId, cardArray, availableMana) {
   if (!el) return;
   el.innerHTML = '';
   cardArray.forEach((card, idx) => {
-    // エサ場専用カード（isFood = true）で生成
     let cardEl = createCardEl(card, true);
     if (idx >= availableMana) {
       cardEl.classList.add('food-used');
@@ -717,7 +769,6 @@ function createCardEl(card, isFood = false) {
   
   const elemText = { red: '赤', blue: '青', green: '緑' }[card.element];
 
-  // エサ場用カード：名前とステータスの生成をスキップ
   if (isFood) {
     el.innerHTML = `
       <div class="card-header">
@@ -727,7 +778,6 @@ function createCardEl(card, isFood = false) {
       <img class="card-img" src="${card.image}" alt="${card.name}">
     `;
   } else {
-    // 通常カード
     const hpColor = (card.hp < card.maxHp) ? '#e63946' : '#2a9d8f';
     el.innerHTML = `
       <div class="card-header">
@@ -836,6 +886,7 @@ function initUIEvents() {
 function startApp() {
   initAvatarSelection();
   initUIEvents();
+  initBGMOnFirstTouch();
 }
 
 if (document.readyState === 'loading') {

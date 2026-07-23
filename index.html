@@ -4,6 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>昆虫カードバトル Online</title>
+
+  <!-- LINEなどのアプリ内ブラウザ対策：既定の外部ブラウザ（Chrome/Safari）で強制オープン -->
+  <script>
+    (function() {
+      var ua = navigator.userAgent || '';
+      // LINEアプリ内ブラウザを検知した場合
+      if (ua.indexOf('LINE') !== -1) {
+        if (location.href.indexOf('openExternalBrowser=1') === -1) {
+          var sep = location.href.indexOf('?') !== -1 ? '&' : '?';
+          location.href = location.href + sep + 'openExternalBrowser=1';
+        }
+      }
+    })();
+  </script>
+
   <!-- PeerJS CDN -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <!-- フォント追加 (Cinzel) -->
@@ -14,6 +29,9 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+  <!-- BGM ON/OFF トグルボタン（画面右上） -->
+  <button id="btn-bgm-toggle" class="bgm-toggle-btn" onclick="toggleBGM()">🎵 BGM: ON</button>
 
   <!-- ロビー画面 -->
   <div id="lobby">
@@ -26,7 +44,6 @@
     </div>
 
     <div class="lobby-section">
-      <!-- ★ onclick="createRoom()" を追加 ★ -->
       <button id="btn-create" onclick="createRoom()">部屋を作成（ホスト）</button>
       <div id="copy-id-container">
         <div style="font-size: 0.8rem; margin-bottom:4px; color:#aaa;">下のIDをタップしてコピー:</div>
@@ -36,7 +53,6 @@
     <hr style="border-color: rgba(212, 175, 55, 0.2);">
     <div class="lobby-section">
       <input type="text" id="join-id" placeholder="相手のIDを入力">
-      <!-- ★ onclick="joinRoom()" を追加 ★ -->
       <button id="btn-join" onclick="joinRoom()">部屋に入る（ゲスト）</button>
     </div>
     <div id="status-msg" style="margin-top:15px; font-size:0.85rem; color:#aaa;"></div>
