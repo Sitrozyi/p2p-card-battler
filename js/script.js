@@ -1,5 +1,4 @@
 // --- icon/ フォルダ内の自作画像定義 ---
-// ご自身のアイコン画像に合わせてファイル名や数を自由に変更・追加できます
 const AVATAR_PRESETS = [
   { id: 'icon1', name: 'アイコン1', src: 'icon/1.png' },
   { id: 'icon2', name: 'アイコン2', src: 'icon/2.png' },
@@ -67,18 +66,23 @@ function triggerSE(type) {
 
 // --- カード定義データ ---
 const CARD_DATA = [
-  { name: "アリ", cost: 1, atk: 700, hp: 500, element: "red", image: "images/ant.jpg" },
-  { name: "クワガタ", cost: 2, atk: 1300, hp: 800, element: "red", image: "images/kuwagata.jpg" },
-  { name: "カブトムシ", cost: 3, atk: 1800, hp: 1300, element: "red", image: "images/kabuto.jpg" },
-  { name: "スズメバチ", cost: 4, atk: 2500, hp: 1800, element: "red", image: "images/suzu.jpg" },
-  { name: "アメンボ", cost: 1, atk: 400, hp: 800, element: "blue", image: "images/amen.jpg" },
-  { name: "ゲンゴロウ", cost: 2, atk: 800, hp: 1300, element: "blue", image: "images/gengo.jpg" },
-  { name: "タガメ", cost: 3, atk: 1200, hp: 2000, element: "blue", image: "images/tagame.png" },
-  { name: "ミズカマキリ", cost: 4, atk: 1700, hp: 2700, element: "blue", image: "images/mizu.png" },
-  { name: "バッタ", cost: 1, atk: 600, hp: 600, element: "green", image: "images/bat.png" },
-  { name: "キリギリス", cost: 2, atk: 1000, hp: 1000, element: "green", image: "images/ki.png" },
-  { name: "カマキリ", cost: 3, atk: 1500, hp: 1500, element: "green", image: "images/kama.png" },
-  { name: "オニヤンマ", cost: 4, atk: 2100, hp: 2200, element: "green", image: "images/oni.png" },
+  // --- 赤属性 (アタッカー特化) ---
+  { name: "アリ",       cost: 1, atk: 400,  hp: 300,  element: "red",   image: "images/ant.jpg" },
+  { name: "クワガタ",   cost: 2, atk: 700,  hp: 500,  element: "red",   image: "images/kuwagata.jpg" },
+  { name: "カブトムシ", cost: 3, atk: 1000, hp: 700,  element: "red",   image: "images/kabuto.jpg" },
+  { name: "スズメバチ", cost: 4, atk: 1400, hp: 900,  element: "red",   image: "images/suzu.jpg" },
+
+  // --- 青属性 (ディフェンダー特化) ---
+  { name: "アメンボ",   cost: 1, atk: 200,  hp: 500,  element: "blue",  image: "images/amen.jpg" },
+  { name: "ゲンゴロウ", cost: 2, atk: 400,  hp: 700,  element: "blue",  image: "images/gengo.jpg" },
+  { name: "タガメ",     cost: 3, atk: 600,  hp: 1100, element: "blue",  image: "images/tagame.png" },
+  { name: "ミズカマキリ",cost: 4, atk: 900,  hp: 1500, element: "blue",  image: "images/mizu.png" },
+
+  // --- 緑属性 (バランス型) ---
+  { name: "バッタ",     cost: 1, atk: 300,  hp: 400,  element: "green", image: "images/bat.png" },
+  { name: "キリギリス", cost: 2, atk: 500,  hp: 500,  element: "green", image: "images/ki.png" },
+  { name: "カマキリ",   cost: 3, atk: 800,  hp: 800,  element: "green", image: "images/kama.png" },
+  { name: "オニヤンマ", cost: 4, atk: 1100, hp: 1100, element: "green", image: "images/oni.png" },
 ];
 
 // --- ゲーム状態変数 ---
@@ -109,7 +113,6 @@ function initAvatarSelection() {
     img.src = av.src;
     img.className = `avatar-option ${idx === selectedAvatarIndex ? 'selected' : ''}`;
     img.title = av.name;
-    // 画像未配置時のエラーハンドリング
     img.onerror = function() {
       this.onerror = null;
       this.src = DEFAULT_FALLBACK_SVG;
@@ -373,7 +376,6 @@ function processAction(role, action, payload) {
     }
   }
   else if (action === 'ATTACK_HERO') {
-    // 相手の場に虫がいる場合は直接攻撃不可
     if (opp.field.length > 0) return;
 
     let attacker = p.field.find(c => c.id === payload.attackerId);
@@ -437,7 +439,7 @@ function render() {
   let oppRole = myRole === 'host' ? 'guest' : 'host';
   let opp = G.players[oppRole];
 
-  // アバター表示更新（エラーハンドリング付き）
+  // アバター表示更新
   const myAvEl = document.getElementById('my-avatar-img');
   const oppAvEl = document.getElementById('opp-avatar-img');
   
@@ -546,7 +548,7 @@ function render() {
     oppFieldEl.appendChild(cardEl);
   });
 
-  // 相手本体への攻撃（相手フィールドが空の時のみ対象可能）
+  // 相手本体への攻撃
   const oppInfoBox = document.getElementById('opponent-info-box');
   if (selectedAttackerCardId && !G.gameOver && opp.field.length === 0) {
     oppInfoBox.classList.add('targetable-hero');
@@ -621,6 +623,7 @@ function renderFoodZone(elementId, cardArray, availableMana) {
   });
 }
 
+// ★ スマホ最適化カード要素作成 ★
 function createCardEl(card) {
   const el = document.createElement('div');
   el.className = `card ${card.element} ${card.exhausted ? 'exhausted' : ''}`;
