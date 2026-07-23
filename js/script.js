@@ -64,21 +64,18 @@ function triggerSE(type) {
   }
 }
 
-// --- カード定義データ ---
+// --- デフレ化調整済みカード定義データ ---
 const CARD_DATA = [
-  // --- 赤属性 (アタッカー特化) ---
   { name: "アリ",       cost: 1, atk: 400,  hp: 300,  element: "red",   image: "images/ant.jpg" },
   { name: "クワガタ",   cost: 2, atk: 700,  hp: 500,  element: "red",   image: "images/kuwagata.jpg" },
   { name: "カブトムシ", cost: 3, atk: 1000, hp: 700,  element: "red",   image: "images/kabuto.jpg" },
   { name: "スズメバチ", cost: 4, atk: 1400, hp: 900,  element: "red",   image: "images/suzu.jpg" },
 
-  // --- 青属性 (ディフェンダー特化) ---
   { name: "アメンボ",   cost: 1, atk: 200,  hp: 500,  element: "blue",  image: "images/amen.jpg" },
   { name: "ゲンゴロウ", cost: 2, atk: 400,  hp: 700,  element: "blue",  image: "images/gengo.jpg" },
   { name: "タガメ",     cost: 3, atk: 600,  hp: 1100, element: "blue",  image: "images/tagame.png" },
   { name: "ミズカマキリ",cost: 4, atk: 900,  hp: 1500, element: "blue",  image: "images/mizu.png" },
 
-  // --- 緑属性 (バランス型) ---
   { name: "バッタ",     cost: 1, atk: 300,  hp: 400,  element: "green", image: "images/bat.png" },
   { name: "キリギリス", cost: 2, atk: 500,  hp: 500,  element: "green", image: "images/ki.png" },
   { name: "カマキリ",   cost: 3, atk: 800,  hp: 800,  element: "green", image: "images/kama.png" },
@@ -480,7 +477,7 @@ function render() {
   renderFoodZone('my-food', me.food, me.mana);
   renderFoodZone('opp-food', opp.food, opp.mana);
 
-  // 手札
+  // ★ 手札（持ち上げ＆下沈み込み防止計算） ★
   const handEl = document.getElementById('my-hand');
   handEl.innerHTML = '';
   const handCount = me.hand.length;
@@ -496,11 +493,12 @@ function render() {
       cardEl.classList.add('selected');
     }
 
+    // 両端を下に落とさず、中央を少し持ち上げる方向に計算
     if (handCount > 1) {
       const mid = (handCount - 1) / 2;
-      const angle = (idx - mid) * 4;
-      const offsetY = Math.abs(idx - mid) * 2;
-      cardEl.style.transform = `translateY(${offsetY}px) rotate(${angle}deg)`;
+      const angle = (idx - mid) * 3;
+      const liftY = (1 - Math.abs(idx - mid) / (mid || 1)) * 4;
+      cardEl.style.transform = `translateY(${-liftY}px) rotate(${angle}deg)`;
     }
 
     cardEl.onclick = (e) => {
@@ -623,7 +621,6 @@ function renderFoodZone(elementId, cardArray, availableMana) {
   });
 }
 
-// ★ スマホ最適化カード要素作成 ★
 function createCardEl(card) {
   const el = document.createElement('div');
   el.className = `card ${card.element} ${card.exhausted ? 'exhausted' : ''}`;
