@@ -23,7 +23,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -38,6 +38,16 @@
     <div class="lobby-section">
       <div class="avatar-select-title">アイコンを選択</div>
       <div id="avatar-list" class="avatar-list"></div>
+    </div>
+
+    <!-- 盤面（バイオーム）テーマ選択 -->
+    <div class="lobby-section">
+      <div class="avatar-select-title">自分の盤面テーマを選択</div>
+      <select id="biome-select" class="biome-select" onchange="changeBiome(this.value)">
+        <option value="forest">🌳 深夜の森林 (蛍・風で揺れる草木)</option>
+        <option value="ocean">🌊 深海の池 (水泡・横切る魚群)</option>
+        <option value="lava">🌋 灼熱の溶岩 (火の粉・流れるマグマ)</option>
+      </select>
     </div>
 
     <!-- デッキ編集ボタン -->
@@ -62,10 +72,10 @@
 
   <!-- ゲーム画面 -->
   <div id="game-board" class="hidden">
-    <!-- 🍃 蛍＆自然な霧キャンバス -->
+    <!-- 🍃 蛍・魚群・流体マグマ等の演出描画キャンバス -->
     <canvas id="firefly-canvas"></canvas>
 
-    <!-- 🎯 スタイリッシュターゲットアロー(矢印線) SVG描画レイヤー -->
+    <!-- 🎯 スタイリッシュターゲットアロー SVG描画レイヤー -->
     <svg id="target-arrow-svg" class="target-arrow-svg">
       <defs>
         <marker id="arrowhead" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -80,7 +90,7 @@
       <div id="turn-banner-text" class="turn-banner-text">次はあなたの番です</div>
     </div>
 
-    <!-- 相手エリア -->
+    <!-- 相手エリア (画面上半分) -->
     <div class="area" id="opponent-area">
       <div class="player-info" id="opponent-info-box">
         <div class="player-profile">
@@ -103,14 +113,14 @@
       <div class="field-zone" id="opp-field"></div>
     </div>
 
-    <!-- 中央操作バー -->
+    <!-- 中央操作バー (境界仕切り) -->
     <div id="center-bar">
       <button id="btn-surrender" class="btn-surrender">サレンダー</button>
       <div id="log">対戦開始！</div>
       <button id="btn-end-turn">ターン終了</button>
     </div>
 
-    <!-- 自分エリア -->
+    <!-- 自分エリア (画面下半分) -->
     <div class="area" id="my-area">
       <!-- 自分フィールド -->
       <div class="field-zone" id="my-field"></div>
@@ -178,6 +188,20 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- 🪙 コインフリップモーダル -->
+  <div id="coin-modal" class="coin-modal hidden">
+    <div class="coin-box">
+      <div class="coin-inner">蟲</div>
+    </div>
+    <div id="coin-result-text" class="coin-result-text">先攻後攻を決めています...</div>
+  </div>
+
+  <!-- 🏆 フィニッシュカットイン演出オーバーレイ -->
+  <div id="finish-cutin" class="finish-cutin-overlay hidden">
+    <img id="finish-avatar-img" class="finish-avatar" src="" alt="勝者">
+    <div id="finish-text-title" class="finish-text-title">VICTORY</div>
   </div>
 
   <!-- デッキ構築モーダル -->

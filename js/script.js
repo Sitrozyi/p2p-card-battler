@@ -44,6 +44,17 @@ function updateBgmBtn() {
   }
 }
 
+// 🌋 自分の盤面テーマ設定 🌋
+let currentBiome = 'forest';
+
+window.changeBiome = function(biomeKey) {
+  currentBiome = biomeKey;
+  if (G && G.players && G.players[myRole]) {
+    G.players[myRole].biome = biomeKey;
+    sendState();
+  }
+};
+
 // 💬 エモート機能 💬
 window.toggleEmotePicker = function(e) {
   if (e) e.stopPropagation();
@@ -89,6 +100,29 @@ function showTurnBanner(isMyTurn) {
   setTimeout(() => {
     banner.classList.add('hidden');
   }, 1350);
+}
+
+// 💥 属性別攻撃VFX（赤=火/爪痕、青=水/波紋、緑=風/旋風） 💥
+function playAttackVfx(targetEl, element) {
+  if (!targetEl) return;
+  const rect = targetEl.getBoundingClientRect();
+
+  const container = document.createElement('div');
+  container.className = 'vfx-container';
+  container.style.left = (rect.left + rect.width / 2) + 'px';
+  container.style.top = (rect.top + rect.height / 2) + 'px';
+
+  const effectEl = document.createElement('div');
+  if (element === 'red') effectEl.className = 'vfx-slash';
+  else if (element === 'blue') effectEl.className = 'vfx-ripple';
+  else if (element === 'green') effectEl.className = 'vfx-vortex';
+
+  container.appendChild(effectEl);
+  document.body.appendChild(container);
+
+  setTimeout(() => {
+    if (container.parentNode) container.parentNode.removeChild(container);
+  }, 500);
 }
 
 // 💥 演出用エフェクト（ダメージ＆振動＆CRITICAL） 💥
@@ -188,82 +222,303 @@ function shatterCard(targetEl) {
   }
 }
 
-// 🍃 蛍の光 (10個) ＆ 漂う森の霧 (フォグ) アニメーション 🍃
-let fireflies = [];
-let fogTime = 0;
+// 🏆 フィニッシュ (決着) ど派手カットイン 🏆
+function triggerFinishCutin(winnerRole) {
+  const overlay = document.getElementById('finish-cutin');
+  const avatarImg = document.getElementById('finish-avatar-img');
+  const textTitle = document.getElementById('finish-text-title');
+
+  if (!overlay || !avatarImg || !textTitle) return;
+
+  const winnerPlayer = G.players[winnerRole];
+  if (winnerPlayer && winnerPlayer.avatar) {
+    avatarImg.src = winnerPlayer.avatar;
+  } else {
+    avatarImg.src = DEFAULT_FALLBACK_SVG;
+  }
+
+  const isWinner = winnerRole === myRole;
+  textTitle.innerText = isWinner ? "VICTORY" : "DEFEAT";
+
+  overlay.classList.remove('hidden');
+
+  setTimeout(() => {
+    overlay.classList.add('hidden');
+    render();
+  }, 2200);
+}
+
+// 🎨★ 超強化！上下分割バイオーム描画キャンバス ＆ リアルアニメーション ★🎨
+let topParticles = [], bottomParticles = [];
+let topFishGroup = { active: false, x: -100, y: 0, speed: 2 };
+let bottomFishGroup = { active: false, x: -100, y: 0, speed: 2 };
+let topLavaBubbles = [], bottomLavaBubbles = [];
+let animTime = 0;
+let isCanvasLoopRunning = false;
 
 function initFireflies() {
   const canvas = document.getElementById('firefly-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  function resize() {
-    canvas.width = canvas.clientWidth || window.innerWidth;
-    canvas.height = canvas.clientHeight || window.innerHeight;
+  function resizeCanvas() {
+    const board = document.getElementById('game-board');
+    if (board) {
+      canvas.width = board.clientWidth || window.innerWidth;
+      canvas.height = board.clientHeight || window.innerHeight;
+    }
   }
-  resize();
-  window.addEventListener('resize', resize);
 
-  fireflies = [];
-  const count = 10;
-  for (let i = 0; i < count; i++) {
-    fireflies.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      radius: Math.random() * 2 + 1,
-      alpha: Math.random() * 0.4 + 0.1,
-      speedAlpha: Math.random() * 0.008 + 0.003,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3 - 0.1,
-      color: Math.random() > 0.5 ? '#e2d8b5' : '#10b981'
-    });
+  resizeCanvas();
+  setTimeout(resizeCanvas, 100);
+  window.addEventListener('resize', resizeCanvas);
+
+  topParticles = Array.from({ length: 4 }, () => createBiomeParticle(canvas, true));
+  bottomParticles = Array.from({ length: 4 }, () => createBiomeParticle(canvas, false));
+
+  function createBiomeParticle(c, isTop) {
+    const minY = isTop ? 0 : c.height / 2;
+    const maxY = isTop ? c.height / 2 : c.height;
+    return {
+      x: Math.random() * c.width,
+      y: minY + Math.random() * (maxY - minY),
+      radius: Math.random() * 3 + 1,
+      alpha: Math.random() * 0.6 + 0.2,
+      speedAlpha: Math.random() * 0.01 + 0.004,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.4 - 0.2
+    };
   }
+
+  if (isCanvasLoopRunning) return;
+  isCanvasLoopRunning = true;
 
   function loop() {
+    resizeCanvas();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    fogTime += 0.005;
+    animTime += 0.012;
 
-    const gradX = canvas.width / 2 + Math.sin(fogTime) * 120;
-    const gradY = canvas.height / 2 + Math.cos(fogTime * 0.8) * 80;
-    const fogGrad = ctx.createRadialGradient(gradX, gradY, 10, gradX, gradY, canvas.width * 0.7);
-    fogGrad.addColorStop(0, 'rgba(16, 185, 129, 0.06)');
-    fogGrad.addColorStop(0.5, 'rgba(42, 157, 143, 0.03)');
-    fogGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    let oppRole = myRole === 'host' ? 'guest' : 'host';
+    let oppBiome = (G.players[oppRole] && G.players[oppRole].biome) ? G.players[oppRole].biome : 'forest';
+    let myBiome = (G.players[myRole] && G.players[myRole].biome) ? G.players[myRole].biome : 'forest';
 
-    ctx.fillStyle = fogGrad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const midY = canvas.height / 2;
 
-    fireflies.forEach(p => {
+    // 1. 画面上部 (相手バイオーム)
+    drawZoneBiome(ctx, canvas, 0, midY, oppBiome, topParticles, topFishGroup, topLavaBubbles, true);
+
+    // 2. 画面下部 (自分バイオーム)
+    drawZoneBiome(ctx, canvas, midY, midY, myBiome, bottomParticles, bottomFishGroup, bottomLavaBubbles, false);
+
+    requestAnimationFrame(loop);
+  }
+
+  function drawZoneBiome(ctx, canvas, startY, height, biome, particleArray, fishObj, lavaBubbleArray, isTop) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, startY, canvas.width, height);
+    ctx.clip();
+
+    const endY = startY + height;
+
+    // 🔴 背景色の描画 (Canvas自身にグラデーションを直接描画して完全に透過・発光させる)
+    const bgGrad = ctx.createLinearGradient(0, startY, 0, endY);
+    if (biome === 'ocean') {
+      bgGrad.addColorStop(0, 'rgba(8, 30, 48, 0.95)');
+      bgGrad.addColorStop(1, 'rgba(3, 15, 26, 0.98)');
+    } else if (biome === 'lava') {
+      bgGrad.addColorStop(0, 'rgba(50, 10, 10, 0.95)');
+      bgGrad.addColorStop(1, 'rgba(20, 2, 2, 0.98)');
+    } else { // forest
+      bgGrad.addColorStop(0, 'rgba(16, 32, 20, 0.95)');
+      bgGrad.addColorStop(1, 'rgba(6, 16, 8, 0.98)');
+    }
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, startY, canvas.width, height);
+
+    // 🌳 1. 深夜の森林: 風でそよぐ草木シルエット ＆ 蛍の光
+    if (biome === 'forest') {
+      // 🌿 揺れる影草木シルエットを描画
+      ctx.fillStyle = '#040b06';
+      ctx.beginPath();
+      ctx.moveTo(0, endY);
+
+      for (let x = 0; x <= canvas.width + 20; x += 25) {
+        const sway = Math.sin(animTime * 1.8 + x * 0.05) * 14;
+        const grassH = 35 + Math.sin(x * 0.1) * 12;
+
+        ctx.quadraticCurveTo(x + sway / 2, endY - grassH / 2, x + sway, endY - grassH);
+        ctx.quadraticCurveTo(x + sway + 5, endY - grassH / 2, x + 25, endY);
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      // フォグ感
+      const fogGrad = ctx.createRadialGradient(canvas.width/2, startY + height/2, 10, canvas.width/2, startY + height/2, canvas.width*0.6);
+      fogGrad.addColorStop(0, 'rgba(16, 185, 129, 0.12)');
+      fogGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = fogGrad;
+      ctx.fillRect(0, startY, canvas.width, height);
+    }
+
+    // 🌊 2. 深海の池: 魚群スイミング ＆ 水中光線 ＆ 透過バブル
+    if (biome === 'ocean') {
+      // 揺らめく水中レイ (屈折光)
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.05)';
+      for (let i = 0; i < 3; i++) {
+        const rayX = (canvas.width / 3) * i + Math.sin(animTime + i) * 30;
+        ctx.beginPath();
+        ctx.moveTo(rayX, startY);
+        ctx.lineTo(rayX + 60, endY);
+        ctx.lineTo(rayX + 110, endY);
+        ctx.lineTo(rayX + 20, startY);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // 🐟 魚群の泳ぎアニメーション
+      if (!fishObj.active && Math.random() < 0.01) {
+        fishObj.active = true;
+        fishObj.x = -120;
+        fishObj.y = startY + Math.random() * (height - 60) + 30;
+        fishObj.speed = 2.2 + Math.random() * 1.2;
+      }
+
+      if (fishObj.active) {
+        fishObj.x += fishObj.speed;
+        ctx.fillStyle = '#020b14';
+
+        for (let i = 0; i < 6; i++) {
+          const fx = fishObj.x - (i % 3) * 22 - Math.floor(i / 3) * 12;
+          const fy = fishObj.y + (i % 2 === 0 ? 1 : -1) * (i * 7) + Math.sin(animTime * 3 + i) * 6;
+          const tailSway = Math.sin(animTime * 10 + i) * 6;
+
+          // 魚の体
+          ctx.beginPath();
+          ctx.ellipse(fx, fy, 11, 5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 尾びれ
+          ctx.beginPath();
+          ctx.moveTo(fx - 10, fy);
+          ctx.lineTo(fx - 18, fy - 6 + tailSway);
+          ctx.lineTo(fx - 18, fy + 6 + tailSway);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        if (fishObj.x > canvas.width + 150) fishObj.active = false;
+      }
+    }
+
+    // 🌋 3. 灼熱の溶岩: どろどろマグマ流体 ＆ 気泡爆発ポッピング
+    if (biome === 'lava') {
+      // どろどろ流れるマグマ波
+      ctx.fillStyle = '#220404';
+      ctx.beginPath();
+      ctx.moveTo(0, endY);
+
+      for (let x = 0; x <= canvas.width + 10; x += 15) {
+        const waveY = endY - 18 - Math.sin(animTime * 2 + x * 0.03) * 8 - Math.cos(animTime * 1.5 + x * 0.05) * 5;
+        ctx.lineTo(x, waveY);
+      }
+      ctx.lineTo(canvas.width, endY);
+      ctx.closePath();
+      ctx.fill();
+
+      // マグマ表面のネオン発光縁
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#ef4444';
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // 💥 マグマ気泡ポッピング (ブクブク膨らんで弾ける)
+      if (Math.random() < 0.02) {
+        lavaBubbleArray.push({
+          x: Math.random() * canvas.width,
+          y: endY - 18,
+          r: 2,
+          maxR: Math.random() * 8 + 5
+        });
+      }
+
+      lavaBubbleArray.forEach((b, idx) => {
+        b.r += 0.4;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ffedd5';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 弾けた瞬間に火花散る
+        if (b.r >= b.maxR) {
+          for (let p = 0; p < 2; p++) {
+            particleArray.push({
+              x: b.x,
+              y: b.y,
+              radius: Math.random() * 2 + 1,
+              alpha: 0.9,
+              speedAlpha: -0.03,
+              vx: (Math.random() - 0.5) * 2,
+              vy: -(Math.random() * 2 + 1)
+            });
+          }
+          lavaBubbleArray.splice(idx, 1);
+        }
+      });
+    }
+
+    // 粒子描画 (蛍 / 透過水泡 / 火の粉)
+    particleArray.forEach((p, idx) => {
       p.x += p.vx;
       p.y += p.vy;
       p.alpha += p.speedAlpha;
 
-      if (p.alpha <= 0.05 || p.alpha >= 0.5) p.speedAlpha *= -1;
+      if (p.alpha <= 0.05 || p.alpha >= 0.8) p.speedAlpha *= -1;
 
       if (p.x < 0) p.x = canvas.width;
       if (p.x > canvas.width) p.x = 0;
-      if (p.y < 0) p.y = canvas.height;
-      if (p.y > canvas.height) p.y = canvas.height;
+      if (p.y < startY) p.y = startY + height;
+      if (p.y > startY + height) p.y = startY;
 
       ctx.save();
-      ctx.globalAlpha = Math.max(0, Math.min(0.5, p.alpha));
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fillStyle = p.color;
-      ctx.shadowBlur = 6;
-      ctx.shadowColor = p.color;
-      ctx.fill();
+      ctx.globalAlpha = Math.max(0, Math.min(0.85, p.alpha));
+
+      if (biome === 'ocean') { // 水泡
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius * 1.5, 0, Math.PI * 2);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      } else if (biome === 'lava') { // 火の粉
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = Math.random() > 0.3 ? '#f97316' : '#ef4444';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#f97316';
+        ctx.fill();
+      } else { // 蛍
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = Math.random() > 0.5 ? '#fef08a' : '#10b981';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#10b981';
+        ctx.fill();
+      }
       ctx.restore();
     });
 
-    requestAnimationFrame(loop);
+    ctx.restore();
   }
+
   loop();
 }
 
 // 🎯 スタイリッシュターゲットアロー (SVG描画 ＆ 通信同期) 🎯
-let targetedDefenderCardId = null; // ローカルのターゲットID
-let remoteLock = { attackerId: null, defenderId: null }; // 相手からのターゲットロック情報
+let targetedDefenderCardId = null;
+let remoteLock = { attackerId: null, defenderId: null };
 
 function drawTargetArrow(attackerEl, targetEl) {
   const pathEl = document.getElementById('arrow-path');
@@ -312,7 +567,6 @@ function clearTargetArrow() {
 }
 
 function updateTargetArrow() {
-  // 自分がターゲット選択中の場合
   if (selectedAttackerCardId && targetedDefenderCardId) {
     const attackerEl = document.querySelector(`.card[data-card-id="${selectedAttackerCardId}"]`);
     const defenderEl = (targetedDefenderCardId === 'HERO')
@@ -328,7 +582,6 @@ function updateTargetArrow() {
       clearTargetArrowVisualOnly();
     }
   } 
-  // 相手がターゲット選択中の場合 (受信側)
   else if (remoteLock.attackerId && remoteLock.defenderId) {
     const attackerEl = document.querySelector(`.card[data-card-id="${remoteLock.attackerId}"]`);
     let defenderEl = null;
@@ -416,7 +669,8 @@ function openCardPreview(cardData) {
     charge: "【速攻】召喚したターンにすぐ攻撃できる。",
     revenge: "【道連れ】このカードが撃破された時、攻撃してきた相手も道連れで撃破する。",
     drain: "【回復】攻撃した時、自身のHPを+300回復する。",
-    draw: "【1ドロー】召喚した時、山札からカードを1枚引く。"
+    draw: "【1ドロー】召喚した時、山札からカードを1枚引く。",
+    coin: "【樹液コイン】コスト0。使うとこのターンの使用可能コストが+1増える。"
   };
 
   descEl.innerText = cardData.ability ? abilityDescs[cardData.ability] : "特殊能力なし";
@@ -495,25 +749,36 @@ function triggerSE(type) {
   }
 }
 
+// 🪙 後攻ボーナス用カード「樹液コイン」マスターデータ
+const JUETI_COIN_CARD = {
+  name: "樹液コイン",
+  cost: 0,
+  atk: 0,
+  hp: 0,
+  element: "green",
+  ability: "coin",
+  image: "images/jueki.jpg"
+};
+
 // --- マスターカードデータ ---
 const CARD_DATA = [
-  { name: "アリ",       cost: 1, atk: 400,  hp: 300,  element: "red",   ability: "",    image: "images/ant.jpg" },
-  { name: "クワガタ",   cost: 2, atk: 500,  hp: 500,  element: "red",   ability: "",   image: "images/kuwagata.jpg" },
-  { name: "カブトムシ", cost: 3, atk: 600,  hp: 800,  element: "red",   ability: "taunt",   image: "images/kabuto.jpg" },
+  { name: "アリ",       cost: 1, atk: 400,  hp: 300,  element: "red",   ability: "draw",    image: "images/ant.jpg" },
+  { name: "クワガタ",   cost: 2, atk: 500,  hp: 500,  element: "red",   ability: "taunt",   image: "images/kuwagata.jpg" },
+  { name: "カブトムシ", cost: 3, atk: 600,  hp: 700,  element: "red",   ability: "taunt",   image: "images/kabuto.jpg" },
   { name: "スズメバチ", cost: 4, atk: 800,  hp: 900,  element: "red",   ability: "charge",  image: "images/suzu.jpg" },
-  { name: "ムカデ",     cost: 5, atk: 1500, hp: 1000, element: "red",   ability: "charge", image: "images/omu.jpg" },
+  { name: "ムカデ",     cost: 5, atk: 1200, hp: 1000, element: "red",   ability: "revenge", image: "images/omu.jpg" },
 
-  { name: "アメンボ",   cost: 1, atk: 200,  hp: 500,  element: "blue",  ability: "",    image: "images/amen.jpg" },
-  { name: "ゲンゴロウ", cost: 2, atk: 400,  hp: 700,  element: "blue",  ability: "",   image: "images/gengo.jpg" },
-  { name: "タガメ",     cost: 3, atk: 600,  hp: 1000, element: "blue",  ability: "",   image: "images/tagame.png" },
-  { name: "ミズカマキリ",cost: 4, atk: 700,  hp: 1300, element: "blue",  ability: "charge",  image: "images/mizu.png" },
-  { name: "タランチュラ",cost: 5, atk: 1000, hp: 1800, element: "blue",  ability: "taunt", image: "images/tara.jpg" },
+  { name: "アメンボ",   cost: 1, atk: 200,  hp: 500,  element: "blue",  ability: "draw",    image: "images/amen.jpg" },
+  { name: "ゲンゴロウ", cost: 2, atk: 400,  hp: 700,  element: "blue",  ability: "drain",   image: "images/gengo.jpg" },
+  { name: "タガメ",     cost: 3, atk: 600,  hp: 1000, element: "blue",  ability: "taunt",   image: "images/tagame.png" },
+  { name: "ミズカマキリ",cost: 4, atk: 900,  hp: 1500, element: "blue",  ability: "charge",  image: "images/mizu.png" },
+  { name: "タランチュラ",cost: 5, atk: 1000, hp: 1800, element: "blue",  ability: "revenge", image: "images/tara.jpg" },
 
   { name: "バッタ",     cost: 1, atk: 300,  hp: 400,  element: "green", ability: "draw",    image: "images/bat.png" },
-  { name: "キリギリス", cost: 2, atk: 300,  hp: 600,  element: "green", ability: "",   image: "images/ki.png" },
-  { name: "カマキリ",   cost: 3, atk: 600,  hp: 800,  element: "green", ability: "charge",  image: "images/kama.png" },
-  { name: "オニヤンマ", cost: 4, atk: 1000, hp: 1000, element: "green", ability: "", image: "images/oni.png" },
-  { name: "カミキリムシ", cost: 5, atk: 1200, hp: 1200, element: "green", ability: "revenge",   image: "images/kami.jpg" },
+  { name: "キリギリス", cost: 2, atk: 500,  hp: 500,  element: "green", ability: "drain",   image: "images/ki.png" },
+  { name: "カマキリ",   cost: 3, atk: 800,  hp: 800,  element: "green", ability: "charge",  image: "images/kama.png" },
+  { name: "オニヤンマ", cost: 4, atk: 1000, hp: 1000, element: "green", ability: "revenge", image: "images/oni.png" },
+  { name: "カミキリムシ", cost: 5, atk: 1200, hp: 1200, element: "green", ability: "taunt",   image: "images/kami.jpg" },
 ];
 
 let myCustomDeckNames = [];
@@ -628,8 +893,8 @@ let G = {
   winner: null,
   rematchState: { host: false, guest: false },
   players: {
-    host: { deck: [], hand: [], field: [], food: [], mana: 0, territory: [], avatar: '' },
-    guest: { deck: [], hand: [], field: [], food: [], mana: 0, territory: [], avatar: '' }
+    host: { deck: [], hand: [], field: [], food: [], mana: 0, territory: [], avatar: '', biome: 'forest' },
+    guest: { deck: [], hand: [], field: [], food: [], mana: 0, territory: [], avatar: '', biome: 'forest' }
   }
 };
 
@@ -810,14 +1075,18 @@ function setupConnection() {
     document.getElementById('lobby').classList.add('hidden');
     document.getElementById('game-board').classList.remove('hidden');
 
-    initFireflies();
+    setTimeout(() => {
+      initFireflies();
+    }, 150);
 
     if (isHost) {
       G.players.host.avatar = AVATAR_PRESETS[selectedAvatarIndex].src;
+      G.players.host.biome = currentBiome;
     } else {
       conn.send({ 
         type: 'SET_GUEST_INFO', 
         avatar: AVATAR_PRESETS[selectedAvatarIndex].src,
+        biome: currentBiome,
         deckNames: myCustomDeckNames
       });
     }
@@ -864,6 +1133,7 @@ function handleNetworkData(data) {
     processAction(data.role, data.action, data.payload);
   } else if (data.type === 'SET_GUEST_INFO' && isHost) {
     G.players.guest.avatar = data.avatar;
+    G.players.guest.biome = data.biome;
     initGame(data.deckNames);
   } else if (data.type === 'SE') {
     playSE(data.se);
@@ -872,7 +1142,7 @@ function handleNetworkData(data) {
   } else if (data.type === 'TARGET_LOCK') {
     handleRemoteTargetLock(data.attackerId, data.defenderId);
   } else if (data.type === 'EFFECT_BUG') {
-    playAttackBugEffect(data.defenderId, data.damageText, data.isDestroyed, data.isCritical);
+    playAttackBugEffect(data.defenderId, data.damageText, data.isDestroyed, data.isCritical, data.element);
   } else if (data.type === 'EFFECT_SUMMON_IMPACT') {
     playSummonImpactByCardId(data.cardId);
   } else if (data.type === 'EFFECT_HERO') {
@@ -884,7 +1154,6 @@ function handleNetworkData(data) {
   }
 }
 
-// 🎯 受信したターゲットアローを相手視点にリアルタイム変換して描画 🎯
 function handleRemoteTargetLock(attackerId, defenderId) {
   remoteLock.attackerId = attackerId;
   remoteLock.defenderId = defenderId;
@@ -909,6 +1178,7 @@ function createDeckFromNames(nameList, role) {
   return deck.sort(() => Math.random() - 0.5);
 }
 
+// 🪙 ゲーム初期化 ＆ コインフリップ ＆ 後攻特典「樹液コイン」配布
 function initGame(guestDeckNames = null) {
   let hostDeck = createDeckFromNames(myCustomDeckNames, 'host');
   let guestDeck = createDeckFromNames(guestDeckNames || myCustomDeckNames, 'guest');
@@ -929,8 +1199,41 @@ function initGame(guestDeckNames = null) {
   G.winner = null;
   G.rematchState = { host: false, guest: false };
 
-  G.turn = 'host';
-  startTurn('host');
+  const firstRole = Math.random() < 0.5 ? 'host' : 'guest';
+  const secondRole = (firstRole === 'host') ? 'guest' : 'host';
+
+  G.players[secondRole].hand.push({
+    ...JUETI_COIN_CARD,
+    maxHp: 0,
+    id: secondRole + '_jueki_coin'
+  });
+
+  showCoinFlipAnimation(firstRole, () => {
+    G.turn = firstRole;
+    startTurn(firstRole);
+  });
+}
+
+function showCoinFlipAnimation(firstRole, callback) {
+  const modal = document.getElementById('coin-modal');
+  const resultText = document.getElementById('coin-result-text');
+  if (!modal || !resultText) {
+    if (callback) callback();
+    return;
+  }
+
+  modal.classList.remove('hidden');
+  resultText.innerText = "先攻後攻を決めています...";
+
+  setTimeout(() => {
+    const isMyFirst = (firstRole === myRole);
+    resultText.innerText = isMyFirst ? "あなたは【先攻】です！" : "あなたは【後攻】です！（樹液コイン獲得）";
+
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      if (callback) callback();
+    }, 1200);
+  }, 1400);
 }
 
 function startTurn(role) {
@@ -956,7 +1259,7 @@ function startTurn(role) {
   sendState();
 }
 
-function playAttackBugEffect(defenderId, damageText, isDestroyed, isCritical) {
+function playAttackBugEffect(defenderId, damageText, isDestroyed, isCritical, element = 'red') {
   const cards = document.querySelectorAll('.card');
   let targetCardEl = null;
 
@@ -967,7 +1270,9 @@ function playAttackBugEffect(defenderId, damageText, isDestroyed, isCritical) {
   });
 
   if (targetCardEl) {
+    playAttackVfx(targetCardEl, element);
     showDamageEffect(targetCardEl, damageText, isCritical);
+
     if (isDestroyed) {
       shatterCard(targetCardEl);
     }
@@ -1001,35 +1306,40 @@ function processAction(role, action, payload) {
   } 
   else if (action === 'PLAY_CARD') {
     let card = p.hand[payload.handIndex];
-    
-    // 🛑 フィールド最高5枚制限 🛑
-    if (p.field.length >= 5) {
-      log("フィールドには最高5枚までしか出せません！");
-      return;
-    }
 
-    if (p.mana >= card.cost) {
-      p.mana -= card.cost;
+    if (card.ability === 'coin') {
       p.hand.splice(payload.handIndex, 1);
-
-      card.exhausted = (card.ability !== 'charge');
-      p.field.push(card);
-
-      if (card.cost >= 5) {
-        setTimeout(() => {
-          playSummonImpactByCardId(card.id);
-          if (conn && conn.open) {
-            conn.send({ type: 'EFFECT_SUMMON_IMPACT', cardId: card.id });
-          }
-        }, 100);
+      p.mana += 1;
+      log(`${role === myRole ? 'あなた' : '相手'}は【樹液コイン】を使用！コスト+1！`);
+    } else {
+      if (p.field.length >= 5) {
+        log("フィールドには最高5枚までしか出せません！");
+        return;
       }
 
-      if (card.ability === 'draw' && p.deck.length > 0) {
-        let drawn = p.deck.pop();
-        p.hand.push(drawn);
-        log(`${role === myRole ? 'あなた' : '相手'}は[${card.name}]を召喚！【1ドロー】！`);
-      } else {
-        log(`${role === myRole ? 'あなた' : '相手'}は[${card.name}]を召喚！`);
+      if (p.mana >= card.cost) {
+        p.mana -= card.cost;
+        p.hand.splice(payload.handIndex, 1);
+
+        card.exhausted = (card.ability !== 'charge');
+        p.field.push(card);
+
+        if (card.cost >= 5) {
+          setTimeout(() => {
+            playSummonImpactByCardId(card.id);
+            if (conn && conn.open) {
+              conn.send({ type: 'EFFECT_SUMMON_IMPACT', cardId: card.id });
+            }
+          }, 100);
+        }
+
+        if (card.ability === 'draw' && p.deck.length > 0) {
+          let drawn = p.deck.pop();
+          p.hand.push(drawn);
+          log(`${role === myRole ? 'あなた' : '相手'}は[${card.name}]を召喚！【1ドロー】！`);
+        } else {
+          log(`${role === myRole ? 'あなた' : '相手'}は[${card.name}]を召喚！`);
+        }
       }
     }
   }
@@ -1066,7 +1376,7 @@ function processAction(role, action, payload) {
         isRevengeDestroyed = true;
       }
 
-      playAttackBugEffect(defender.id, dmgText, isDestroyed, isCritical);
+      playAttackBugEffect(defender.id, dmgText, isDestroyed, isCritical, attacker.element);
 
       if (conn && conn.open) {
         conn.send({ 
@@ -1074,7 +1384,8 @@ function processAction(role, action, payload) {
           defenderId: defender.id, 
           damageText: dmgText, 
           isDestroyed: isDestroyed,
-          isCritical: isCritical
+          isCritical: isCritical,
+          element: attacker.element
         });
       }
 
@@ -1087,7 +1398,7 @@ function processAction(role, action, payload) {
           opp.field = opp.field.filter(c => c.id !== defender.id);
 
           if (isRevengeDestroyed) {
-            playAttackBugEffect(attacker.id, "道連れ!", true, false);
+            playAttackBugEffect(attacker.id, "道連れ!", true, false, 'red');
             p.field = p.field.filter(c => c.id !== attacker.id);
             log(`[${defender.name}]の【道連れ】！ [${attacker.name}]も道連れ！`);
           } else {
@@ -1115,7 +1426,10 @@ function processAction(role, action, payload) {
       triggerSE('attack');
 
       const oppInfoBox = document.getElementById('opponent-info-box');
-      if (oppInfoBox) showDamageEffect(oppInfoBox, 'ライフ-1!');
+      if (oppInfoBox) {
+        playAttackVfx(oppInfoBox, attacker.element);
+        showDamageEffect(oppInfoBox, 'ライフ-1!');
+      }
 
       if (conn && conn.open) {
         conn.send({ type: 'EFFECT_HERO' });
@@ -1132,6 +1446,7 @@ function processAction(role, action, payload) {
         G.gameOver = true;
         G.winner = role;
         log(`決着！ ${role === myRole ? 'あなた' : '相手'}の勝利！`);
+        triggerFinishCutin(role);
       }
     }
   }
@@ -1141,6 +1456,7 @@ function processAction(role, action, payload) {
     G.gameOver = true;
     G.winner = oppRole;
     log(`${role === myRole ? 'あなた' : '相手'}がサレンダーしました。`);
+    triggerFinishCutin(oppRole);
   }
   else if (action === 'END_TURN') {
     clearTargetArrow();
@@ -1180,6 +1496,13 @@ function render() {
   let oppRole = myRole === 'host' ? 'guest' : 'host';
   let opp = G.players[oppRole];
 
+  const myAreaEl = document.getElementById('my-area');
+  const oppAreaEl = document.getElementById('opponent-area');
+
+  // エリア要素を透かしてCanvas背景を描画可能にする
+  if (myAreaEl) myAreaEl.style.background = 'transparent';
+  if (oppAreaEl) oppAreaEl.style.background = 'transparent';
+
   const myAvEl = document.getElementById('my-avatar-img');
   const oppAvEl = document.getElementById('opp-avatar-img');
   
@@ -1193,8 +1516,6 @@ function render() {
     oppAvEl.onerror = function() { this.onerror = null; this.src = DEFAULT_FALLBACK_SVG; };
   }
 
-  const myAreaEl = document.getElementById('my-area');
-  const oppAreaEl = document.getElementById('opponent-area');
   if (myAreaEl && oppAreaEl) {
     if (isMyTurn && !G.gameOver) {
       myAreaEl.classList.add('active-turn');
@@ -1234,7 +1555,10 @@ function render() {
     me.hand.forEach((card, idx) => {
       let cardEl = createCardEl(card, false);
 
-      if (isMyTurn && me.mana >= card.cost && !G.gameOver && me.field.length < 5) {
+      const canPlayNormal = (card.ability !== 'coin' && me.mana >= card.cost && me.field.length < 5);
+      const canPlayCoin = (card.ability === 'coin');
+
+      if (isMyTurn && (canPlayNormal || canPlayCoin) && !G.gameOver) {
         cardEl.classList.add('playable');
       }
 
@@ -1361,7 +1685,6 @@ function render() {
     }
   }
 
-  // 🎯 描画更新時に自分／相手のターゲットアローを同期描画 🎯
   updateTargetArrow();
 
   // リザルト表示処理
@@ -1445,7 +1768,8 @@ function createCardEl(card, isFood = false) {
     charge: "速攻",
     revenge: "道連れ",
     drain: "回復",
-    draw: "1ドロー"
+    draw: "1ドロー",
+    coin: "コイン"
   };
 
   if (isFood) {
@@ -1488,15 +1812,17 @@ function toggleActionModal() {
     let isFieldFull = G.players[myRole].field.length >= 5;
 
     document.getElementById('action-modal-card-name').innerText = `[${card.name}] の操作`;
-    document.getElementById('btn-act-food').disabled = G.foodSetThisTurn;
-    
-    // 🛑 フィールド5枚制限時の「場に出す」制御 🛑
-    const btnPlay = document.getElementById('btn-act-play');
-    btnPlay.disabled = (G.players[myRole].mana < card.cost) || isFieldFull;
-    if (isFieldFull) {
-      btnPlay.innerText = "場に出す (上限5枚)";
+
+    if (card.ability === 'coin') {
+      document.getElementById('btn-act-food').disabled = true;
+      const btnPlay = document.getElementById('btn-act-play');
+      btnPlay.disabled = false;
+      btnPlay.innerText = "使う (コスト+1)";
     } else {
-      btnPlay.innerText = "場に出す";
+      document.getElementById('btn-act-food').disabled = G.foodSetThisTurn;
+      const btnPlay = document.getElementById('btn-act-play');
+      btnPlay.disabled = (G.players[myRole].mana < card.cost) || isFieldFull;
+      btnPlay.innerText = isFieldFull ? "場に出す (上限5枚)" : "場に出す";
     }
   } else {
     modal.classList.add('hidden');
