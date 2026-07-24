@@ -23,22 +23,30 @@ const JUETI_COIN_CARD = {
 
 const CARD_DATA = [
   { name: "アリ",       cost: 1, atk: 2, hp: 1, element: "red",   ability: "draw",    image: "images/ant.jpg" },
-  { name: "クワガタ",   cost: 2, atk: 3, hp: 3, element: "red",   ability: "taunt",   image: "images/kuwagata.jpg" },
+  { name: "クワガタ",   cost: 2, atk: 3, hp: 3, element: "red",   ability: "",   image: "images/kuwagata.jpg" },
   { name: "カブトムシ", cost: 3, atk: 4, hp: 5, element: "red",   ability: "taunt",   image: "images/kabuto.jpg" },
+   { name: "アカオニグモ", cost: 3, atk: 5, hp: 4, element: "red",   ability: "charge",  image: "images/aka.jpg" },
   { name: "スズメバチ", cost: 4, atk: 5, hp: 6, element: "red",   ability: "charge",  image: "images/suzu.jpg" },
-  { name: "ムカデ",     cost: 5, atk: 8, hp: 7, element: "red",   ability: "revenge", image: "images/omu.jpg" },
+  { name: "ムカデ",     cost: 5, atk: 6, hp: 7, element: "red",   ability: "", image: "images/omu.jpg" },
+ { name: "女王バチ", cost: 6, atk: 8, hp: 7, element: "red",   ability: "charge",   image: "images/zyo.jpg" },
 
-  { name: "アメンボ",   cost: 1, atk: 1, hp: 3, element: "blue",  ability: "draw",    image: "images/amen.jpg" },
+  { name: "アメンボ",   cost: 1, atk: 1, hp: 3, element: "blue",  ability: "",    image: "images/amen.jpg" },
   { name: "ゲンゴロウ", cost: 2, atk: 2, hp: 4, element: "blue",  ability: "drain",   image: "images/gengo.jpg" },
-  { name: "タガメ",     cost: 3, atk: 3, hp: 6, element: "blue",  ability: "taunt",   image: "images/tagame.png" },
-  { name: "ミズカマキリ",cost: 4, atk: 5, hp: 8, element: "blue",  ability: "charge",  image: "images/mizu.png" },
-  { name: "タランチュラ",cost: 5, atk: 7, hp: 10,element: "blue",  ability: "revenge", image: "images/tara.jpg" },
+  { name: "タガメ",     cost: 3, atk: 2, hp: 6, element: "blue",  ability: "",   image: "images/tagame.png" },
+  { name: "ミズカマキリ",cost: 4, atk: 4, hp: 8, element: "blue",  ability: "charge",  image: "images/mizu.png" },
+    { name: "モルフォチョウ", cost: 4, atk: 2, hp: 7, element: "blue",  ability: "drain",   image: "images/mol.jpg" },
+  { name: "タランチュラ",cost: 5, atk: 3, hp: 10,element: "blue",  ability: "", image: "images/tara.jpg" },
+{ name: "ハンミョウ",   cost: 5, atk: 6, hp: 6, element: "blue",  ability: "taunt",    image: "images/han.jpg" },
 
-  { name: "バッタ",     cost: 1, atk: 2, hp: 2, element: "green", ability: "draw",    image: "images/bat.png" },
+
+
+  { name: "バッタ",     cost: 1, atk: 2, hp: 2, element: "green", ability: "",    image: "images/bat.png" },
   { name: "キリギリス", cost: 2, atk: 3, hp: 3, element: "green", ability: "drain",   image: "images/ki.png" },
-  { name: "カマキリ",   cost: 3, atk: 5, hp: 5, element: "green", ability: "charge",  image: "images/kama.png" },
-  { name: "オニヤンマ", cost: 4, atk: 6, hp: 6, element: "green", ability: "revenge", image: "images/oni.png" },
-  { name: "カミキリムシ", cost: 5, atk: 8, hp: 8, element: "green", ability: "taunt",   image: "images/kami.jpg" },
+  { name: "カマキリ",   cost: 3, atk: 4, hp: 4, element: "green", ability: "",  image: "images/kama.png" },
+  { name: "オニヤンマ", cost: 4, atk: 5, hp: 6, element: "green", ability: "charge", image: "images/oni.png" },
+  { name: "カミキリムシ", cost: 5, atk: 6, hp: 6, element: "green", ability: "",   image: "images/kami.jpg" },
+ { name: "魔王カマキリ", cost: 6, atk: 8, hp: 8, element: "green", ability: "drain",   image: "images/mao.jpg" },
+
 ];
 // --- グローバル状態変数 ---
 let peer = null, conn = null;
