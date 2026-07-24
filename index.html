@@ -25,57 +25,64 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/lobby.css">
+<link rel="stylesheet" href="css/game.css">
 </head>
 <body>
+
+  <!-- 🍃 背景全画面キャンバス (揺れる森林シルエット＆蛍) -->
+  <canvas id="firefly-canvas"></canvas>
 
   <!-- 🎵 BGM ON/OFF ボタン -->
   <button id="btn-bgm-toggle" class="bgm-toggle-btn" onclick="toggleBGM()">🎵 BGM: ON</button>
 
   <!-- ロビー画面 -->
+ <!-- ロビー画面 -->
   <div id="lobby">
-    <h1>蟲カードバトル</h1>
+    <h1>カードバトル</h1>
 
+    <!-- 👤 アバターアイコン選択 -->
     <div class="lobby-section">
       <div class="avatar-select-title">アイコンを選択</div>
       <div id="avatar-list" class="avatar-list"></div>
     </div>
 
-    <!-- 盤面（バイオーム）テーマ選択 -->
+    <!-- 🛠️ デッキ編集ボタン -->
     <div class="lobby-section">
-      <div class="avatar-select-title">自分の盤面テーマを選択</div>
-      <select id="biome-select" class="biome-select" onchange="changeBiome(this.value)">
-        <option value="forest">🌳 深夜の森林 (蛍・風で揺れる草木)</option>
-        <option value="ocean">🌊 深海の池 (水泡・横切る魚群)</option>
-        <option value="lava">🌋 灼熱の溶岩 (火の粉・流れるマグマ)</option>
-      </select>
+      <button class="btn-deck-edit" onclick="openDeckBuilder()">🛠️ デッキ編集 (<span id="lobby-deck-count">25</span>/25枚)</button>
     </div>
 
-    <!-- デッキ編集ボタン -->
-    <div class="lobby-section">
-      <button class="btn-deck-edit" onclick="openDeckBuilder()">🛠️ デッキ編集 (<span id="lobby-deck-count">20</span>/20枚)</button>
-    </div>
+    <hr style="border-color: rgba(212, 175, 55, 0.25); margin: 16px 0;">
 
+    <!-- ⚔️ 対戦セクション (同じ下部にボタンを集約) -->
     <div class="lobby-section">
-      <button id="btn-create" onclick="createRoom()">部屋を作成（ホスト）</button>
-      <div id="copy-id-container">
-        <div style="font-size: 0.8rem; margin-bottom:4px; color:#aaa;">下のIDをタップしてコピー:</div>
+      <!-- ゲスト用 部屋ID入力欄 -->
+      <input type="text" id="join-id" placeholder="部屋に入る場合は相手のIDを入力">
+
+      <!-- 「部屋を作成」と「部屋に入る」を横並びで配置 -->
+      <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <button id="btn-create" onclick="createRoom()" style="flex: 1; padding: 11px 4px;">部屋を作成</button>
+        <button id="btn-join" onclick="joinRoom()" style="flex: 1; padding: 11px 4px;">部屋に入る</button>
+      </div>
+
+      <!-- 🤖 CPU対戦（デッキ試走）ボタン -->
+      <button id="btn-cpu" class="btn-secondary" style="margin-top: 10px;" onclick="startCPUMode()">🤖 CPU対戦（ソロ試走）</button>
+
+      <!-- 部屋を作成した場合のIDコピー用表示 -->
+      <div id="copy-id-container" style="margin-top: 10px;">
+        <div style="font-size: 0.8rem; margin-bottom:4px; color:#aaa;">下のIDをタップして相手に共有:</div>
         <div id="host-id-btn" class="copy-btn">ID生成中...</div>
       </div>
     </div>
-    <hr style="border-color: rgba(212, 175, 55, 0.2);">
-    <div class="lobby-section">
-      <input type="text" id="join-id" placeholder="相手のIDを入力">
-      <button id="btn-join" onclick="joinRoom()">部屋に入る（ゲスト）</button>
-    </div>
-    <div id="status-msg" style="margin-top:15px; font-size:0.85rem; color:#aaa;"></div>
+
+    <div id="status-msg" style="margin-top:12px; font-size:0.85rem; color:#aaa;"></div>
   </div>
 
-  <!-- ゲーム画面 -->
+  <!-- 対戦画面 -->
   <div id="game-board" class="hidden">
-    <!-- 🍃 蛍・魚群・流体マグマ等の演出描画キャンバス -->
-    <canvas id="firefly-canvas"></canvas>
 
-    <!-- 🎯 スタイリッシュターゲットアロー SVG描画レイヤー -->
+    <!-- 🎯 ターゲットアロー SVG描画レイヤー -->
     <svg id="target-arrow-svg" class="target-arrow-svg">
       <defs>
         <marker id="arrowhead" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -90,7 +97,7 @@
       <div id="turn-banner-text" class="turn-banner-text">次はあなたの番です</div>
     </div>
 
-    <!-- 相手エリア (画面上半分) -->
+    <!-- 相手エリア -->
     <div class="area" id="opponent-area">
       <div class="player-info" id="opponent-info-box">
         <div class="player-profile">
@@ -104,27 +111,23 @@
         </div>
         <div class="territory-zone" id="opp-territory"></div>
       </div>
-      <!-- 相手エサ場 -->
       <div class="food-zone-wrapper">
         <div class="food-zone-title">相手のエサ場 (<span id="opp-food-count">0</span>)</div>
         <div class="food-zone" id="opp-food"></div>
       </div>
-      <!-- 相手フィールド -->
       <div class="field-zone" id="opp-field"></div>
     </div>
 
-    <!-- 中央操作バー (境界仕切り) -->
+    <!-- 中央操作バー -->
     <div id="center-bar">
       <button id="btn-surrender" class="btn-surrender">サレンダー</button>
       <div id="log">対戦開始！</div>
       <button id="btn-end-turn">ターン終了</button>
     </div>
 
-    <!-- 自分エリア (画面下半分) -->
+    <!-- 自分エリア -->
     <div class="area" id="my-area">
-      <!-- 自分フィールド -->
       <div class="field-zone" id="my-field"></div>
-      <!-- 自分エサ場 -->
       <div class="food-zone-wrapper">
         <div class="food-zone-title">自分のエサ場 (コスト:<span id="my-mana">0</span>/<span id="my-food-count">0</span>)</div>
         <div class="food-zone" id="my-food"></div>
@@ -136,12 +139,11 @@
             <button class="emote-trigger-btn" onclick="toggleEmotePicker(event)">💬</button>
             <div id="my-emote-bubble" class="emote-bubble hidden"></div>
 
-            <!-- エモート選択ポップアップ -->
             <div id="emote-picker" class="emote-picker hidden" onclick="event.stopPropagation()">
-              <button onclick="sendEmote('よろしく！')">👋 よろしく！</button>
-              <button onclick="sendEmote('すごい！')">👏 すごい！</button>
+              <button onclick="sendEmote('よろしく！')">👋 よろしくね！</button>
+              <button onclick="sendEmote('すごい！')">👏 まじかよ</button>
               <button onclick="sendEmote('ぐぬぬ…')">😣 ぐぬぬ…</button>
-              <button onclick="sendEmote('参りました！')">🙇 参りました！</button>
+              <button onclick="sendEmote('参りました！')">🙇 GG!!</button>
             </div>
           </div>
           <div>
@@ -150,11 +152,10 @@
         </div>
         <div class="territory-zone" id="my-territory"></div>
       </div>
-      <!-- 自分手札 -->
       <div class="hand-zone" id="my-hand"></div>
     </div>
 
-    <!-- アクション選択ポップアップ -->
+    <!-- アクション選択モーダル -->
     <div id="action-modal" class="hidden">
       <div class="action-modal-content">
         <div class="action-modal-title" id="action-modal-card-name">カード選択</div>
@@ -179,7 +180,7 @@
       </div>
     </div>
 
-    <!-- 🔍 カード拡大プレビューモーダル -->
+    <!-- 🔍 カード拡大モーダル -->
     <div id="card-preview-modal" class="preview-modal hidden" onclick="closeCardPreview()">
       <div class="preview-modal-content" onclick="event.stopPropagation()">
         <div id="preview-card-container"></div>
@@ -190,27 +191,38 @@
 
   </div>
 
-  <!-- 🪙 コインフリップモーダル -->
+  <!-- 🪙 3Dコインフリップモーダル -->
   <div id="coin-modal" class="coin-modal hidden">
-    <div class="coin-box">
-      <div class="coin-inner">蟲</div>
+    <div class="coin-container">
+      <div id="coin-element" class="coin-3d">
+        <div class="coin-face coin-front">先攻</div>
+        <div class="coin-face coin-back">後攻</div>
+      </div>
     </div>
-    <div id="coin-result-text" class="coin-result-text">先攻後攻を決めています...</div>
+    <div id="coin-result-text" class="coin-result-text">先攻、後攻を決めています...</div>
   </div>
 
-  <!-- 🏆 フィニッシュカットイン演出オーバーレイ -->
+  <!-- 🏆 フィニッシュカットイン -->
   <div id="finish-cutin" class="finish-cutin-overlay hidden">
     <img id="finish-avatar-img" class="finish-avatar" src="" alt="勝者">
     <div id="finish-text-title" class="finish-text-title">VICTORY</div>
   </div>
 
-  <!-- デッキ構築モーダル -->
+  <!-- 🛠️ デッキ構築モーダル -->
   <div id="deck-builder-modal" class="deck-modal hidden">
     <div class="deck-modal-content">
       <div class="deck-header">
         <h2>🛠️ デッキ編成</h2>
-        <div class="deck-counter">枚数: <span id="deck-count-num">0</span> / 20枚</div>
+        <div class="deck-counter">枚数: <span id="deck-count-num">0</span> / 25枚</div>
       </div>
+
+      <!-- 🌋 盤面テーマ選択 -->
+      <div class="deck-section-title">▼ 自分の盤面テーマを選択</div>
+      <select id="biome-select" class="biome-select" onchange="changeBiome(this.value)">
+        <option value="forest">🌳 深夜の森林</option>
+        <option value="ocean">🌊 深海の池</option>
+        <option value="lava">🌋 灼熱の溶岩</option>
+      </select>
 
       <div class="deck-section-title">▼ 構成中のデッキ (タップで外す)</div>
       <div id="current-deck-grid" class="deck-grid"></div>
@@ -225,6 +237,10 @@
     </div>
   </div>
 
-  <script src="js/script.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+
+  <script src="js/network.js"></script>
 </body>
 </html>

@@ -1,0 +1,16 @@
+js/game.js ： カードデータ、ゲーム状態（G）、対戦ルール・アクション判定
+
+js/network.js ： PeerJSによるP2P通信、部屋作成・参加、ネットワーク同期
+
+js/ui.js ： 画面描画（DOM・Canvas）、VFXエフェクト、BGM/SE音響、UIイベントリスナー
+css/main.css
+
+（基本変数・リセット・全画面背景・BGMボタン・共通モーダル・VFXエフェクト等）
+code CSS
+2. css/lobby.css
+
+（ロビー画面・アバター選択・デッキ構築モーダル）
+code CSS
+3. css/game.css
+
+（ゲーム盤面・プレイヤー情報・エモート・ターゲット矢印・カード構造・オーブ・フィニッシュ演出等）
