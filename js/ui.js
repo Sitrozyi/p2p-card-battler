@@ -65,7 +65,7 @@ function playSE(type) {
 
 function triggerSE(type) {
   playSE(type);
-  if (conn && conn.open) conn.send({ type: 'SE', se: type });
+  if (typeof conn !== 'undefined' && conn && conn.open) conn.send({ type: 'SE', se: type });
 }
 
 // --- エモート ---
@@ -84,7 +84,7 @@ window.sendEmote = function(text) {
   const picker = document.getElementById('emote-picker');
   if (picker) picker.classList.add('hidden');
   showEmoteBubble('my-emote-bubble', text);
-  if (conn && conn.open) conn.send({ type: 'EMOTE', text });
+  if (typeof conn !== 'undefined' && conn && conn.open) conn.send({ type: 'EMOTE', text });
 };
 
 function showEmoteBubble(elementId, text) {
@@ -333,7 +333,7 @@ function clearTargetArrowVisualOnly() {
 function clearTargetArrow() {
   targetedDefenderCardId = null; remoteLock = { attackerId: null, defenderId: null };
   clearTargetArrowVisualOnly();
-  if (conn && conn.open) conn.send({ type: 'TARGET_LOCK', attackerId: null, defenderId: null });
+  if (typeof conn !== 'undefined' && conn && conn.open) conn.send({ type: 'TARGET_LOCK', attackerId: null, defenderId: null });
 }
 
 function updateTargetArrow() {
@@ -515,18 +515,18 @@ function render() {
   let isMyTurn = G.turn === myRole, me = G.players[myRole];
   let oppRole = myRole === 'host' ? 'guest' : 'host', opp = G.players[oppRole];
 
-  const myAreaEl = document.getElementById('my-area'), oppAreaEl = document.getElementById('opponent-area');
-  if (myAreaEl) myAreaEl.style.background = 'transparent';
-  if (oppAreaEl) oppAreaEl.style.background = 'transparent';
-
   const myAvEl = document.getElementById('my-avatar-img'), oppAvEl = document.getElementById('opp-avatar-img');
   if (myAvEl) { myAvEl.src = me.avatar || DEFAULT_FALLBACK_SVG; myAvEl.onerror = function() { this.src = DEFAULT_FALLBACK_SVG; }; }
   if (oppAvEl) { oppAvEl.src = opp.avatar || DEFAULT_FALLBACK_SVG; oppAvEl.onerror = function() { this.src = DEFAULT_FALLBACK_SVG; }; }
 
-  document.getElementById('my-mana').innerText = me.mana;
-  document.getElementById('my-food-count').innerText = me.food.length;
+  // マナテキスト更新
+  const myManaText = document.getElementById('my-mana-text');
+  if (myManaText) myManaText.innerText = `${me.mana} / ${me.maxMana}`;
+
+  const oppManaText = document.getElementById('opp-mana-text');
+  if (oppManaText) oppManaText.innerText = `${opp.mana} / ${opp.maxMana}`;
+
   document.getElementById('my-deck').innerText = me.deck.length;
-  document.getElementById('opp-food-count').innerText = opp.food.length;
   document.getElementById('opp-deck').innerText = opp.deck.length;
   document.getElementById('opp-hand-count').innerText = opp.hand.length;
 
@@ -535,8 +535,10 @@ function render() {
 
   renderTerritory('my-territory', me.territory.length);
   renderTerritory('opp-territory', opp.territory.length);
-  renderFoodZone('my-food', me.food, me.mana);
-  renderFoodZone('opp-food', opp.food, opp.mana);
+
+  // マナジュエル表示の更新
+  renderManaJewels('my-food', me.mana, me.maxMana);
+  renderManaJewels('opp-food', opp.mana, opp.maxMana);
 
   // 手札
   const handEl = document.getElementById('my-hand');
@@ -588,7 +590,7 @@ function render() {
         if (selectedAttackerCardId && !G.gameOver) {
           if (targetedDefenderCardId !== card.id) {
             targetedDefenderCardId = card.id;
-            if (conn && conn.open) conn.send({ type: 'TARGET_LOCK', attackerId: selectedAttackerCardId, defenderId: card.id });
+            if (typeof conn !== 'undefined' && conn && conn.open) conn.send({ type: 'TARGET_LOCK', attackerId: selectedAttackerCardId, defenderId: card.id });
             log(`🎯 [${card.name}]をロックオン！ もう一度タップで攻撃！`); render();
           } else {
             sendAction('ATTACK_BUG', { attackerId: selectedAttackerCardId, defenderId: card.id });
@@ -609,7 +611,7 @@ function render() {
         e.stopPropagation();
         if (targetedDefenderCardId !== 'HERO') {
           targetedDefenderCardId = 'HERO';
-          if (conn && conn.open) conn.send({ type: 'TARGET_LOCK', attackerId: selectedAttackerCardId, defenderId: 'HERO' });
+          if (typeof conn !== 'undefined' && conn && conn.open) conn.send({ type: 'TARGET_LOCK', attackerId: selectedAttackerCardId, defenderId: 'HERO' });
           log(`🎯 相手本体をロックオン！ もう一度タップでダイレクトアタック！`); render();
         } else {
           sendAction('ATTACK_HERO', { attackerId: selectedAttackerCardId });
@@ -641,23 +643,32 @@ function renderTerritory(elementId, count) {
   }
 }
 
-function renderFoodZone(elementId, cardArray, availableMana) {
+function renderManaJewels(elementId, availableMana, maxMana) {
   const el = document.getElementById(elementId);
   if (!el) return;
   el.innerHTML = '';
-  cardArray.forEach((card, idx) => {
+  for (let i = 0; i < maxMana; i++) {
     let jewel = document.createElement('div');
-    jewel.className = `emerald-jewel ${idx >= availableMana ? 'used' : ''}`;
-    jewel.title = `${card.name} (コスト:${card.cost})`;
-    attachCardInteraction(jewel, card, () => openCardPreview(card));
+    jewel.className = `emerald-jewel ${i >= availableMana ? 'used' : ''}`;
+    jewel.title = `マナ (${availableMana}/${maxMana})`;
     el.appendChild(jewel);
-  });
+  }
 }
 
 function createCardEl(card, isFood = false) {
   const el = document.createElement('div');
-  const isHolo = (card.cost >= 5);
-  el.className = `card ${card.element} ${card.exhausted ? 'exhausted' : ''} ${isHolo ? 'holographic' : ''}`;
+  
+  const isEpic = (card.cost === 5);
+  const isLegend = (card.cost >= 6);
+  
+  let holoClass = '';
+  if (isLegend) {
+    holoClass = 'holographic-legend';
+  } else if (isEpic) {
+    holoClass = 'holographic-epic';
+  }
+
+  el.className = `card ${card.element} ${card.exhausted ? 'exhausted' : ''} ${holoClass}`;
   if (card.id) el.dataset.cardId = card.id;
 
   const elemText = { red: '赤', blue: '青', green: '緑' }[card.element] || '';
@@ -685,20 +696,16 @@ function createCardEl(card, isFood = false) {
         <div class="card-element">${elemText}</div>
       </div>
       
-      <!-- カード上面半分のイラスト領域 -->
       <div class="card-img-container">
         <img class="card-img" src="${card.image}" alt="${card.name}">
       </div>
       
-      <!-- イラストの少し下に配置されたカード名 -->
       <div class="card-name">${card.name}</div>
 
-      <!-- 高級感溢れる重厚なメタリックオーブ (攻撃力) -->
       <div class="card-orb orb-atk" title="攻撃力">
         <span class="orb-val">${card.atk}</span>
       </div>
       
-      <!-- 高級感溢れる重厚なメタリックオーブ (HP) -->
       <div class="card-orb orb-hp ${isHpDamaged ? 'damaged' : ''}" title="HP">
         <span class="orb-val">${card.hp}</span>
       </div>
@@ -716,13 +723,14 @@ function toggleActionModal() {
     let isFieldFull = G.players[myRole].field.length >= 5;
     document.getElementById('action-modal-card-name').innerText = `[${card.name}] の操作`;
 
+    const btnFood = document.getElementById('btn-act-food');
+    if (btnFood) btnFood.style.display = 'none';
+
+    const btnPlay = document.getElementById('btn-act-play');
     if (card.ability === 'coin') {
-      document.getElementById('btn-act-food').disabled = true;
-      const btnPlay = document.getElementById('btn-act-play');
-      btnPlay.disabled = false; btnPlay.innerText = "使う (コスト+1)";
+      btnPlay.disabled = false;
+      btnPlay.innerText = "使う (コスト+1)";
     } else {
-      document.getElementById('btn-act-food').disabled = G.foodSetThisTurn;
-      const btnPlay = document.getElementById('btn-act-play');
       btnPlay.disabled = (G.players[myRole].mana < card.cost) || isFieldFull;
       btnPlay.innerText = isFieldFull ? "場に出す (上限5枚)" : "場に出す";
     }
@@ -730,6 +738,10 @@ function toggleActionModal() {
 }
 
 // --- UIイベント登録 ---
+// ==========================================
+// main.js (全体の起動制御とUIイベント)
+// ==========================================
+
 function initUIEvents() {
   const btnActFood = document.getElementById('btn-act-food');
   const btnActPlay = document.getElementById('btn-act-play');
@@ -739,16 +751,84 @@ function initUIEvents() {
   const btnRematch = document.getElementById('btn-rematch');
   const btnHome = document.getElementById('btn-home');
 
-  if (btnActFood) btnActFood.onclick = () => { if (selectedHandIndex !== null) { sendAction('SET_FOOD', { handIndex: selectedHandIndex }); selectedHandIndex = null; toggleActionModal(); } };
-  if (btnActPlay) btnActPlay.onclick = () => { if (selectedHandIndex !== null) { sendAction('PLAY_CARD', { handIndex: selectedHandIndex }); selectedHandIndex = null; toggleActionModal(); } };
-  if (btnActCancel) btnActCancel.onclick = () => { selectedHandIndex = null; toggleActionModal(); render(); };
-  if (btnEndTurn) btnEndTurn.onclick = () => { selectedHandIndex = null; selectedAttackerCardId = null; clearTargetArrow(); toggleActionModal(); sendAction('END_TURN'); };
-  if (btnSurrender) btnSurrender.onclick = () => { if (!G.gameOver && confirm("本当にサレンダーしますか？")) { selectedHandIndex = null; selectedAttackerCardId = null; clearTargetArrow(); toggleActionModal(); sendAction('SURRENDER'); } };
-  if (btnRematch) btnRematch.onclick = () => sendAction('REMATCH');
-  if (btnHome) btnHome.onclick = () => { if (conn && conn.open) conn.send({ type: 'LEAVE_GAME' }); location.reload(); };
+  if (btnActFood) {
+    btnActFood.onclick = () => {
+      if (selectedHandIndex !== null) {
+        sendAction('SET_FOOD', { handIndex: selectedHandIndex });
+        selectedHandIndex = null;
+        toggleActionModal();
+      }
+    };
+  }
+
+  if (btnActPlay) {
+    btnActPlay.onclick = () => {
+      if (selectedHandIndex !== null) {
+        sendAction('PLAY_CARD', { handIndex: selectedHandIndex });
+        selectedHandIndex = null;
+        toggleActionModal();
+      }
+    };
+  }
+
+  if (btnActCancel) {
+    btnActCancel.onclick = () => {
+      selectedHandIndex = null;
+      toggleActionModal();
+      render();
+    };
+  }
+
+  if (btnEndTurn) {
+    btnEndTurn.onclick = () => {
+      if (!G.gameOver && G.turn === myRole) {
+        selectedHandIndex = null;
+        selectedAttackerCardId = null;
+        clearTargetArrow();
+        toggleActionModal();
+        sendAction('END_TURN');
+      }
+    };
+  }
+
+  if (btnSurrender) {
+    btnSurrender.onclick = () => {
+      if (G.gameOver) return;
+      if (confirm("本当にサレンダー（降参）しますか？")) {
+        selectedHandIndex = null;
+        selectedAttackerCardId = null;
+        clearTargetArrow();
+        toggleActionModal();
+        sendAction('SURRENDER');
+      }
+    };
+  }
+
+  if (btnRematch) {
+    btnRematch.onclick = () => {
+      if (isVsCPU) {
+        let cpuDeckNames = [];
+        for (let i = 0; i < 25; i++) {
+          cpuDeckNames.push(CARD_DATA[Math.floor(Math.random() * CARD_DATA.length)].name);
+        }
+        initGame(cpuDeckNames);
+        render();
+      } else {
+        sendAction('REMATCH');
+      }
+    };
+  }
+
+  if (btnHome) {
+    btnHome.onclick = () => {
+      if (typeof conn !== 'undefined' && conn && conn.open) {
+        conn.send({ type: 'LEAVE_GAME' });
+      }
+      location.reload();
+    };
+  }
 }
 
-// --- アプリ起動 ---
 function startApp() {
   loadCustomDeck();
   initAvatarSelection();
@@ -763,82 +843,60 @@ if (document.readyState === 'loading') {
   startApp();
 }
 
-// --- js/ui.js に追加 ---
-// --- js/ui.js の playLegendarySummonVfx 関数 ---
 function playHighCostSummonEffect(cardId, element) {
   const cardEl = document.querySelector(`.card[data-card-id="${cardId}"]`);
   if (!cardEl) return;
 
-  // 1. カード自体を一瞬ピカッと発光させる
-  cardEl.classList.add('card-summon-flash');
-  setTimeout(() => cardEl.classList.remove('card-summon-flash'), 450);
-
-  // 2. 画面を一瞬「ズンッ」と揺らす
-  const board = document.getElementById('game-board');
-  if (board) {
-    board.classList.add('screen-impact-shake');
-    setTimeout(() => board.classList.remove('screen-impact-shake'), 300);
-  }
-
   const rect = cardEl.getBoundingClientRect();
   const centerX = rect.left + rect.width / 2;
   const centerY = rect.top + rect.height / 2;
+
+  cardEl.classList.add('legend-card-landing');
+  setTimeout(() => cardEl.classList.remove('legend-card-landing'), 500);
+
+  const board = document.getElementById('game-board');
+  if (board) {
+    board.classList.add('legend-earthquake-shake');
+    setTimeout(() => board.classList.remove('legend-earthquake-shake'), 600);
+  }
 
   const anchor = document.createElement('div');
   anchor.className = 'vfx-card-anchor';
   anchor.style.left = centerX + 'px';
   anchor.style.top = centerY + 'px';
 
-  // 🔥 赤属性：爆炎渦 ＋ 12個の飛び散る火の粉
+  const shockwave = document.createElement('div');
+  shockwave.className = 'legend-ground-shockwave';
+  
   if (element === 'red') {
-    const vortex = document.createElement('div');
-    vortex.className = 'vfx-flame-vortex';
-    anchor.appendChild(vortex);
+    shockwave.style.borderColor = '#ff3300';
+    shockwave.style.boxShadow = '0 0 20px #ff1100';
+  } else if (element === 'blue') {
+    shockwave.style.borderColor = '#38bdf8';
+    shockwave.style.boxShadow = '0 0 20px #0284c7';
+  } else {
+    shockwave.style.borderColor = '#34d399';
+    shockwave.style.boxShadow = '0 0 20px #10b981';
+  }
+  anchor.appendChild(shockwave);
 
-    for (let i = 0; i < 12; i++) {
-      const spark = document.createElement('div');
-      spark.className = 'vfx-spark';
-      const angle = (i / 12) * Math.PI * 2;
-      const dist = 50 + Math.random() * 40;
-      spark.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
-      spark.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
-      anchor.appendChild(spark);
-    }
+  const auraEl = document.createElement('div');
+  if (element === 'red') {
+    auraEl.className = 'legend-aura-red';
+  } else if (element === 'blue') {
+    auraEl.className = 'legend-aura-blue';
+  } else {
+    auraEl.className = 'legend-aura-green';
   }
-  // 🌊 青属性：2重水幕 ＋ 12個の弾ける大水滴
-  else if (element === 'blue') {
-    const splash = document.createElement('div');
-    splash.className = 'vfx-water-splash';
-    anchor.appendChild(splash);
-
-    for (let i = 0; i < 12; i++) {
-      const drop = document.createElement('div');
-      drop.className = 'vfx-droplet';
-      const angle = (i / 12) * Math.PI * 2;
-      const dist = 45 + Math.random() * 45;
-      drop.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
-      drop.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
-      anchor.appendChild(drop);
-    }
-  }
-  // 🍃 緑属性：16枚の木葉トルネード
-  else if (element === 'green') {
-    for (let i = 0; i < 16; i++) {
-      const leaf = document.createElement('div');
-      leaf.className = 'vfx-leaf-particle';
-      const angle = (i / 16) * Math.PI * 2;
-      const dist = 40 + Math.random() * 40;
-      const ty = -35 - Math.random() * 45;
-      leaf.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
-      leaf.style.setProperty('--ty', `${ty}px`);
-      leaf.style.setProperty('--rot', `${(Math.random() - 0.5) * 720}deg`);
-      leaf.style.animationDelay = (i * 0.015) + 's';
-      anchor.appendChild(leaf);
-    }
-  }
+  anchor.appendChild(auraEl);
 
   document.body.appendChild(anchor);
+
+  if (typeof triggerSE === 'function') {
+    triggerSE('destroy');
+  }
+
   setTimeout(() => {
     if (anchor.parentNode) anchor.parentNode.removeChild(anchor);
-  }, 550);
+  }, 750);
 }

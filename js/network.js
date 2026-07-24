@@ -96,7 +96,14 @@ function setupConnection() {
 }
 
 function sendState() {
-  if (isHost) { conn.send({ type: 'SYNC', state: G }); render(); }
+  if (isHost) {
+    // conn が存在し、通信が開いている時のみ送信
+    if (typeof conn !== 'undefined' && conn && conn.open) {
+      conn.send({ type: 'SYNC', state: G });
+    }
+    // 画面の再描画は必ず実行する
+    render();
+  }
 }
 
 function sendAction(action, payload) {

@@ -330,12 +330,12 @@
   to { transform: scale(1.06); }
 }
 
-.card.holographic {
+.card.holographic-epic {
   border-color: #ffd700 !important;
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.7), 0 4px 12px rgba(0,0,0,0.8) !important;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.6), 0 4px 12px rgba(0,0,0,0.8) !important;
 }
 
-.card.holographic::after {
+.card.holographic-epic::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -343,17 +343,19 @@
   clip-path: inset(0 round 5px);
   background: linear-gradient(
     135deg,
-    transparent 10%,
-    rgba(255, 255, 255, 0.35) 30%,
-    rgba(255, 0, 128, 0.35) 45%,
-    rgba(0, 255, 255, 0.35) 60%,
-    rgba(255, 230, 0, 0.35) 75%,
-    transparent 90%
+    transparent 15%,
+    rgba(255, 255, 255, 0.25) 35%,
+    rgba(255, 0, 128, 0.25) 50%,
+    rgba(0, 255, 255, 0.25) 65%,
+    rgba(255, 230, 0, 0.25) 80%,
+    transparent 95%
   );
   background-size: 250% 250%;
-  animation: holoGleamAnim 3.2s infinite linear;
+  /* モーションを8秒までスロー化して高級感を付与 */
+  animation: holoGleamAnim 8s infinite ease-in-out;
   pointer-events: none;
   mix-blend-mode: color-dodge;
+  opacity: 0.65;
   z-index: 2;
 }
 
@@ -723,4 +725,219 @@
   0% { transform: translate(0, 15px) rotate(0deg) scale(0.2); opacity: 0; }
   40% { opacity: 1; }
   100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1.4); opacity: 0; }
+}
+
+/* --------------------------------------------------
+   🌟 コスト5：エピック（流れる虹色ホログラム）
+-------------------------------------------------- */
+/* --------------------------------------------------
+   🌟 コスト5：エピック（極低速な虹色ホログラム）
+-------------------------------------------------- */
+.card.holographic-epic {
+  border-color: #ffd700 !important;
+}
+
+.card.holographic-epic::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 5px;
+  clip-path: inset(0 round 5px);
+  background: linear-gradient(
+    135deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.2) 40%,
+    rgba(255, 0, 128, 0.2) 55%,
+    rgba(0, 255, 255, 0.2) 70%,
+    rgba(255, 230, 0, 0.2) 85%,
+    transparent 100%
+  );
+  background-size: 400% 400%;
+  /* 18秒かけて、じわ〜っと超静かに変化 */
+  animation: holoGleamSlow 18s linear infinite;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.6;
+  z-index: 2;
+}
+
+@keyframes holoGleamSlow {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+/* --------------------------------------------------
+   👑 コスト6以上：レジェンド（超スロー極彩虹ホロ＋背後独立・強力属性オーラ）
+-------------------------------------------------- */
+.card.holographic-legend {
+  border: 2px solid #fff6a5 !important;
+  z-index: 5;
+}
+
+/* 1. 白飛びしない超低速オーロラホロ（18秒周期） */
+.card.holographic-legend::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  clip-path: inset(0 round 4px);
+  background: linear-gradient(
+    125deg,
+    rgba(255, 0, 100, 0.18) 0%,
+    rgba(255, 200, 0, 0.18) 25%,
+    rgba(0, 230, 255, 0.18) 50%,
+    rgba(0, 255, 120, 0.18) 75%,
+    rgba(255, 0, 100, 0.18) 100%
+  );
+  background-size: 350% 350%;
+  /* 18秒の超静寂スローモーション */
+  animation: legendAuroraSlow 18s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.85;
+  z-index: 2;
+}
+
+@keyframes legendAuroraSlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 2. 背後に独立して発光する強力属性オーラ層（::beforeを使用） */
+.card.holographic-legend::before {
+  content: '';
+  position: absolute;
+  inset: -6px; /* カードの外側6pxにオーラをはみ出させる */
+  border-radius: 10px;
+  z-index: -1; /* カードの背後に配置 */
+  pointer-events: none;
+  animation: auraPulse 2.5s infinite alternate ease-in-out;
+}
+
+/* 属性別のオーラ発光カラー（他CSSに上書きされません） */
+.card.holographic-legend.red::before {
+  background: radial-gradient(circle, rgba(255, 30, 0, 0.85) 0%, rgba(255, 100, 0, 0.4) 60%, transparent 80%);
+  filter: blur(4px);
+}
+.card.holographic-legend.blue::before {
+  background: radial-gradient(circle, rgba(0, 180, 255, 0.85) 0%, rgba(0, 240, 255, 0.4) 60%, transparent 80%);
+  filter: blur(4px);
+}
+.card.holographic-legend.green::before {
+  background: radial-gradient(circle, rgba(0, 255, 100, 0.85) 0%, rgba(180, 255, 0, 0.4) 60%, transparent 80%);
+  filter: blur(4px);
+}
+
+@keyframes auraPulse {
+  0% { transform: scale(0.98); opacity: 0.65; }
+  100% { transform: scale(1.05); opacity: 1; filter: blur(6px); }
+}
+
+/* --------------------------------------------------
+   💥 コスト6専用：属性別着地オーラ ＆ 地面激震VFX
+-------------------------------------------------- */
+
+/* 1. 地面を激しく揺るがす地震振動 */
+.legend-earthquake-shake {
+  animation: earthquakeShake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) !important;
+}
+
+@keyframes earthquakeShake {
+  0% { transform: translate(0, 0); }
+  15% { transform: translate(-8px, 6px) rotate(-1deg); filter: brightness(1.5); }
+  30% { transform: translate(8px, -6px) rotate(1deg); }
+  45% { transform: translate(-6px, 4px); }
+  60% { transform: translate(6px, -3px); }
+  75% { transform: translate(-3px, 2px); }
+  100% { transform: translate(0, 0); filter: none; }
+}
+
+/* 2. カードがズドン！と降臨する着地モーション */
+.legend-card-landing {
+  animation: legendCardDrop 0.5s cubic-bezier(0.11, 0.9, 0.2, 1) !important;
+}
+
+@keyframes legendCardDrop {
+  0% { transform: translateY(-160px) scale(1.8); opacity: 0; filter: brightness(3); }
+  65% { transform: translateY(0) scale(0.92); opacity: 1; filter: brightness(1.8); }
+  85% { transform: translateY(-10px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+/* 3. 足元の亀裂衝撃波リング */
+.legend-ground-shockwave {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: shockwaveExpand 0.65s ease-out forwards;
+}
+
+@keyframes shockwaveExpand {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; border-width: 8px; }
+  100% { transform: translate(-50%, -50%) scale(7.5); opacity: 0; border-width: 1px; }
+}
+
+/* 4. 【赤属性】紅蓮の爆炎オーラ */
+.legend-aura-red {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255, 230, 0, 0.9) 0%, rgba(255, 50, 0, 0.8) 45%, transparent 75%);
+  filter: drop-shadow(0 0 20px #ff2200);
+  animation: redFlameAura 0.7s ease-out forwards;
+}
+
+@keyframes redFlameAura {
+  0% { transform: translate(-50%, -50%) scale(0.1) rotate(0deg); opacity: 0; }
+  35% { opacity: 1; transform: translate(-50%, -50%) scale(1.6) rotate(90deg); }
+  100% { transform: translate(-50%, -50%) scale(2.8) rotate(180deg); opacity: 0; }
+}
+
+/* 5. 【青属性】蒼天の激流瀑布オーラ */
+.legend-aura-blue {
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  border: 6px solid #38bdf8;
+  box-shadow: 0 0 30px #0284c7, inset 0 0 25px #e0f2fe;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.6) 0%, transparent 70%);
+  animation: blueWaterAura 0.7s ease-out forwards;
+}
+
+@keyframes blueWaterAura {
+  0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; border-width: 14px; }
+  40% { opacity: 1; border-width: 8px; }
+  100% { transform: translate(-50%, -50%) scale(3.0); opacity: 0; border-width: 1px; }
+}
+
+/* 6. 【緑属性】翠緑の嵐・聖光オーラ */
+.legend-aura-green {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(from 0deg, transparent 0%, #34d399 25%, #aaff00 50%, #10b981 75%, transparent 100%);
+  filter: drop-shadow(0 0 20px #10b981);
+  mask-image: radial-gradient(circle, transparent 30%, black 70%);
+  -webkit-mask-image: radial-gradient(circle, transparent 30%, black 70%);
+  animation: greenStormAura 0.75s ease-out forwards;
+}
+
+@keyframes greenStormAura {
+  0% { transform: translate(-50%, -50%) scale(0.1) rotate(0deg); opacity: 0; }
+  40% { opacity: 1; transform: translate(-50%, -50%) scale(1.8) rotate(270deg); }
+  100% { transform: translate(-50%, -50%) scale(3.2) rotate(540deg); opacity: 0; }
 }

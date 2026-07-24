@@ -62,13 +62,12 @@ let lastRenderTurn = null;
 
 let G = {
   turn: 'host',
-  foodSetThisTurn: false,
   gameOver: false,
   winner: null,
   rematchState: { host: false, guest: false },
   players: {
-    host: { deck: [], hand: [], field: [], food: [], mana: 0, territory: [], avatar: '', biome: 'forest' },
-    guest: { deck: [], hand: [], field: [], food: [], mana: 0, territory: [], avatar: '', biome: 'forest' }
+    host: { deck: [], hand: [], field: [], mana: 0, maxMana: 0, territory: [], avatar: '', biome: 'forest' },
+    guest: { deck: [], hand: [], field: [], mana: 0, maxMana: 0, territory: [], avatar: '', biome: 'forest' }
   }
 };
 
@@ -167,20 +166,7 @@ async function runCPUTurn() {
 
   const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
-  if (!G.foodSetThisTurn && cpu.hand.length > 0) {
-    let bestFoodIndex = 0;
-    let maxCost = -1;
-    cpu.hand.forEach((c, idx) => {
-      if (c.ability !== 'coin' && c.cost > maxCost) {
-        maxCost = c.cost;
-        bestFoodIndex = idx;
-      }
-    });
-    processAction('guest', 'SET_FOOD', { handIndex: bestFoodIndex });
-    render();
-    await delay(600);
-  }
-
+  // 樹液コインがあれば使用
   let coinIdx = cpu.hand.findIndex(c => c.ability === 'coin');
   if (coinIdx !== -1) {
     processAction('guest', 'PLAY_CARD', { handIndex: coinIdx });
@@ -188,6 +174,7 @@ async function runCPUTurn() {
     await delay(500);
   }
 
+  // コストが足りる限り手札からカードを出す
   let canPlay = true;
   while (canPlay && cpu.field.length < 5 && !G.gameOver) {
     let playableIndices = [];
@@ -483,14 +470,16 @@ function initGame(guestDeckNames = null) {
   G.players.host.territory = hostDeck.splice(0, 6);
   G.players.host.hand = hostDeck.splice(0, 4);
   G.players.host.deck = hostDeck;
-  G.players.host.food = [];
   G.players.host.field = [];
+  G.players.host.mana = 0;
+  G.players.host.maxMana = 0;
 
   G.players.guest.territory = guestDeck.splice(0, 6);
   G.players.guest.hand = guestDeck.splice(0, 4);
   G.players.guest.deck = guestDeck;
-  G.players.guest.food = [];
   G.players.guest.field = [];
+  G.players.guest.mana = 0;
+  G.players.guest.maxMana = 0;
 
   G.gameOver = false;
   G.winner = null;
@@ -515,9 +504,9 @@ function initGame(guestDeckNames = null) {
   });
 }
 
+// --- 修正後 startTurn ---
 function startTurn(role) {
   G.turn = role;
-  G.foodSetThisTurn = false;
   clearTargetArrow();
   let p = G.players[role];
 
@@ -525,7 +514,9 @@ function startTurn(role) {
     p.hand.push(p.deck.pop());
   }
 
-  p.mana = p.food.length;
+  p.maxMana = Math.min(10, (p.maxMana || 0) + 1);
+  p.mana = p.maxMana;
+
   p.field.forEach(c => {
     c.exhausted = false;
     c.hp = c.maxHp; 
@@ -535,7 +526,14 @@ function startTurn(role) {
   lastRenderTurn = role;
 
   log(`${role === myRole ? 'あなた' : '相手'}のターン開始`);
+  
+  // 状態送信と再描画
   sendState();
+
+  // 【追記】CPU対戦かつCPUのターンの場合、自動思考を開始
+  if (isVsCPU && role === 'guest' && !G.gameOver) {
+    scheduleCPUTurn();
+  }
 }
 
 function processAction(role, action, payload) {
