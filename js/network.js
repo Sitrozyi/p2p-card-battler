@@ -108,13 +108,15 @@ function handleNetworkData(data) {
   if (data.type === 'SYNC') {
     G = data.state;
     if (lastRenderTurn !== G.turn && !G.gameOver) {
-      showTurnBanner(G.turn === myRole); lastRenderTurn = G.turn;
+      showTurnBanner(G.turn === myRole);
+      lastRenderTurn = G.turn;
     }
     render();
   } else if (data.type === 'ACTION' && isHost) {
     processAction(data.role, data.action, data.payload);
   } else if (data.type === 'SET_GUEST_INFO' && isHost) {
-    G.players.guest.avatar = data.avatar; G.players.guest.biome = data.biome;
+    G.players.guest.avatar = data.avatar;
+    G.players.guest.biome = data.biome;
     initGame(data.deckNames);
   } else if (data.type === 'COIN_FLIP') {
     play3DCoinFlipAnimation(data.firstRole, data.secondRole);
@@ -128,11 +130,14 @@ function handleNetworkData(data) {
     playAttackBugEffect(data.defenderId, data.damageText, data.isDestroyed, data.isCritical, data.element);
   } else if (data.type === 'EFFECT_SUMMON_IMPACT') {
     playSummonImpactByCardId(data.cardId);
+  } else if (data.type === 'EFFECT_LEGEND_SUMMON') { // ← これを追加！
+    playLegendarySummonVfx(data.card);               // ← これを追加！
   } else if (data.type === 'EFFECT_HERO') {
     const oppInfoBox = document.getElementById('opponent-info-box');
     if (oppInfoBox) showDamageEffect(oppInfoBox, 'ライフ-1!');
   } else if (data.type === 'LEAVE_GAME') {
-    alert("相手が退室しました。ロビーへ戻ります。"); location.reload();
+    alert("相手が退室しました。ロビーへ戻ります。");
+    location.reload();
   }
 }
 

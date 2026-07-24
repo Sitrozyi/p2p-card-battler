@@ -385,7 +385,7 @@ function openCardPreview(cardData) {
     taunt: "【挑発】相手はこのカードしか攻撃・ダイレクトアタックできない。",
     charge: "【速攻】召喚したターンにすぐ攻撃できる。",
     revenge: "【道連れ】このカードが撃破された時、攻撃してきた相手も道連れで撃破する。",
-    drain: "【回復】攻撃した時、自身のHPを+300回復する。",
+    drain: "【回復】攻撃した時、自身のHPを+3回復する。",
     draw: "【1ドロー】召喚した時、山札からカードを1枚引く。",
     coin: "【樹液コイン】コスト0。使うとこのターンの使用可能コストが+1増える。"
   };
@@ -761,4 +761,84 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', startApp);
 } else {
   startApp();
+}
+
+// --- js/ui.js に追加 ---
+// --- js/ui.js の playLegendarySummonVfx 関数 ---
+function playHighCostSummonEffect(cardId, element) {
+  const cardEl = document.querySelector(`.card[data-card-id="${cardId}"]`);
+  if (!cardEl) return;
+
+  // 1. カード自体を一瞬ピカッと発光させる
+  cardEl.classList.add('card-summon-flash');
+  setTimeout(() => cardEl.classList.remove('card-summon-flash'), 450);
+
+  // 2. 画面を一瞬「ズンッ」と揺らす
+  const board = document.getElementById('game-board');
+  if (board) {
+    board.classList.add('screen-impact-shake');
+    setTimeout(() => board.classList.remove('screen-impact-shake'), 300);
+  }
+
+  const rect = cardEl.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+
+  const anchor = document.createElement('div');
+  anchor.className = 'vfx-card-anchor';
+  anchor.style.left = centerX + 'px';
+  anchor.style.top = centerY + 'px';
+
+  // 🔥 赤属性：爆炎渦 ＋ 12個の飛び散る火の粉
+  if (element === 'red') {
+    const vortex = document.createElement('div');
+    vortex.className = 'vfx-flame-vortex';
+    anchor.appendChild(vortex);
+
+    for (let i = 0; i < 12; i++) {
+      const spark = document.createElement('div');
+      spark.className = 'vfx-spark';
+      const angle = (i / 12) * Math.PI * 2;
+      const dist = 50 + Math.random() * 40;
+      spark.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
+      spark.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
+      anchor.appendChild(spark);
+    }
+  }
+  // 🌊 青属性：2重水幕 ＋ 12個の弾ける大水滴
+  else if (element === 'blue') {
+    const splash = document.createElement('div');
+    splash.className = 'vfx-water-splash';
+    anchor.appendChild(splash);
+
+    for (let i = 0; i < 12; i++) {
+      const drop = document.createElement('div');
+      drop.className = 'vfx-droplet';
+      const angle = (i / 12) * Math.PI * 2;
+      const dist = 45 + Math.random() * 45;
+      drop.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
+      drop.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
+      anchor.appendChild(drop);
+    }
+  }
+  // 🍃 緑属性：16枚の木葉トルネード
+  else if (element === 'green') {
+    for (let i = 0; i < 16; i++) {
+      const leaf = document.createElement('div');
+      leaf.className = 'vfx-leaf-particle';
+      const angle = (i / 16) * Math.PI * 2;
+      const dist = 40 + Math.random() * 40;
+      const ty = -35 - Math.random() * 45;
+      leaf.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
+      leaf.style.setProperty('--ty', `${ty}px`);
+      leaf.style.setProperty('--rot', `${(Math.random() - 0.5) * 720}deg`);
+      leaf.style.animationDelay = (i * 0.015) + 's';
+      anchor.appendChild(leaf);
+    }
+  }
+
+  document.body.appendChild(anchor);
+  setTimeout(() => {
+    if (anchor.parentNode) anchor.parentNode.removeChild(anchor);
+  }, 550);
 }

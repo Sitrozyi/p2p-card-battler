@@ -192,25 +192,66 @@
   padding: 2px 0;
 }
 
+/* --------------------------------------------------
+   💎 エサ場マナ (3D回転・輝きエメラルドジュエル)
+-------------------------------------------------- */
 .emerald-jewel {
-  width: 20px;
-  height: 26px;
-  background: linear-gradient(135deg, #a7f3d0 0%, #10b981 45%, #047857 100%);
+  width: 22px;
+  height: 28px;
+  background: radial-gradient(circle at 30% 25%, #d1fae5 0%, #10b981 40%, #047857 75%, #022c22 100%);
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  border: 1px solid #6ee7b7;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.85);
+  border: 1.5px solid #a7f3d0;
   display: inline-block;
   flex-shrink: 0;
-  transition: all 0.3s ease;
   cursor: pointer;
+  position: relative;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+  
+  animation: jewelSpinGlow 3.6s infinite ease-in-out;
+  perspective: 600px;
+  transform-style: preserve-3d;
+}
+
+.emerald-jewel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(255, 255, 255, 0.2) 30%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+@keyframes jewelSpinGlow {
+  0% {
+    transform: rotateY(0deg) scale(1);
+    filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.8)) brightness(1);
+  }
+  50% {
+    transform: rotateY(180deg) scale(1.12);
+    filter: drop-shadow(0 0 16px rgba(52, 211, 153, 1)) brightness(1.4);
+  }
+  100% {
+    transform: rotateY(360deg) scale(1);
+    filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.8)) brightness(1);
+  }
 }
 
 .emerald-jewel.used {
-  background: linear-gradient(145deg, #374151, #111827) !important;
-  border-color: #4b5563 !important;
+  animation: none !important;
+  transform: rotateY(0deg) scale(0.88) !important;
+  background: radial-gradient(circle at 35% 35%, #374151 0%, #1f2937 60%, #030712 100%) !important;
+  border: 1px solid #4b5563 !important;
   box-shadow: none !important;
-  opacity: 0.35;
-  filter: grayscale(100%);
+  filter: grayscale(100%) brightness(0.5) !important;
+  opacity: 0.45;
+}
+
+.emerald-jewel.used::after {
+  display: none !important;
 }
 
 #center-bar {
@@ -267,15 +308,15 @@
   padding: 3px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   position: relative;
   cursor: pointer;
   flex-shrink: 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
-  border: 1.5px solid #555;
-  background: #222;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85);
+  border: 1.5px solid rgba(212, 175, 55, 0.4);
+  background: linear-gradient(180deg, #1f2822 0%, #0d120e 100%);
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-  overflow: visible !important; /* オーブを縁にくっつけるため可視化 */
+  overflow: visible !important;
 }
 
 .card.targeted-lock-on {
@@ -289,7 +330,6 @@
   to { transform: scale(1.06); }
 }
 
-/* 🛠️ ホログラフィック演出 */
 .card.holographic {
   border-color: #ffd700 !important;
   box-shadow: 0 0 12px rgba(255, 215, 0, 0.7), 0 4px 12px rgba(0,0,0,0.8) !important;
@@ -361,6 +401,8 @@
   font-size: 0.62rem;
   z-index: 3;
   line-height: 1;
+  height: 14px;
+  margin-bottom: 2px;
 }
 
 .card-cost {
@@ -393,36 +435,45 @@
 
 .card-element { font-size: 0.58rem; z-index: 3; }
 
+.card-img-container {
+  width: 100%;
+  height: 42px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 3px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: #000;
+  flex-shrink: 0;
+}
+
 .card-img {
   width: 100%;
-  height: 30px;
+  height: 100%;
   object-fit: cover;
-  border-radius: 3px;
-  margin: 1px 0;
-  border: 1px solid rgba(255,255,255,0.1);
   pointer-events: none;
-  z-index: 1;
 }
 
 .card-name {
-  font-size: 0.55rem;
+  font-size: 0.58rem;
   text-align: center;
   font-weight: bold;
-  word-break: break-all;
-  line-height: 1.1;
-  color: #fff;
+  line-height: 1.2;
+  color: var(--gold-light);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin: 1px 0;
+  margin-top: 3px;
   z-index: 3;
 }
 
-/* --- 丸形発光オーブの共通スタイル --- */
+/* --------------------------------------------------
+   高級ジュエルドーム & 重厚メタリックフレーム オーブ
+-------------------------------------------------- */
 .card-orb {
   position: absolute;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -431,57 +482,51 @@
   box-sizing: border-box;
   user-select: none;
   pointer-events: none;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .orb-val {
-  font-size: 0.7rem;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 0.68rem;
   font-weight: 900;
   color: #ffffff;
-  text-shadow: 0 1px 2px #000, 0 0 4px rgba(0,0,0,0.8);
+  text-shadow: 0 1px 2px #000, 0 0 4px rgba(0,0,0,0.9);
   line-height: 1;
+  z-index: 2;
 }
 
-/* --- 左下縁: 攻撃力 (赤色発光オーブ) --- */
 .orb-atk {
-  bottom: -4px;
-  left: -4px;
-  background: radial-gradient(circle at 35% 35%, #ff6b6b 0%, #dc2626 60%, #991b1b 100%);
-  border: 1.5px solid #fca5a5;
+  bottom: -2px;
+  left: -2px;
+  background: radial-gradient(circle at 35% 35%, #ff4d4d 0%, #b91c1c 55%, #450a0a 100%);
+  border: 1.5px solid #fef08a;
   box-shadow: 
-    0 0 6px rgba(239, 68, 68, 0.8),
-    0 0 12px rgba(239, 68, 68, 0.4),
-    inset 0 1px 2px rgba(255, 255, 255, 0.6);
-  animation: orbGlowRed 2.5s infinite ease-in-out;
+    0 2px 5px rgba(0, 0, 0, 0.9),
+    0 0 6px rgba(220, 38, 38, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.7),
+    inset 0 -1px 3px rgba(0, 0, 0, 0.8);
 }
 
-@keyframes orbGlowRed {
-  0%, 100% { box-shadow: 0 0 6px rgba(239, 68, 68, 0.8), 0 0 12px rgba(239, 68, 68, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.6); }
-  50% { box-shadow: 0 0 10px rgba(248, 113, 113, 0.95), 0 0 18px rgba(239, 68, 68, 0.6), inset 0 1px 3px rgba(255, 255, 255, 0.8); }
-}
-
-/* --- 右下縁: HP (緑色発光オーブ) --- */
 .orb-hp {
-  bottom: -4px;
-  right: -4px;
-  background: radial-gradient(circle at 35% 35%, #34d399 0%, #059669 60%, #047857 100%);
-  border: 1.5px solid #6ee7b7;
+  bottom: -2px;
+  right: -2px;
+  background: radial-gradient(circle at 35% 35%, #34d399 0%, #047857 55%, #022c22 100%);
+  border: 1.5px solid #fef08a;
   box-shadow: 
-    0 0 6px rgba(16, 185, 129, 0.8),
-    0 0 12px rgba(16, 185, 129, 0.4),
-    inset 0 1px 2px rgba(255, 255, 255, 0.6);
-  animation: orbGlowGreen 2.5s infinite ease-in-out;
-}
-
-@keyframes orbGlowGreen {
-  0%, 100% { box-shadow: 0 0 6px rgba(16, 185, 129, 0.8), 0 0 12px rgba(16, 185, 129, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.6); }
-  50% { box-shadow: 0 0 10px rgba(52, 211, 153, 0.95), 0 0 18px rgba(16, 185, 129, 0.6), inset 0 1px 3px rgba(255, 255, 255, 0.8); }
+    0 2px 5px rgba(0, 0, 0, 0.9),
+    0 0 6px rgba(16, 185, 129, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.7),
+    inset 0 -1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .orb-hp.damaged {
-  background: radial-gradient(circle at 35% 35%, #f59e0b 0%, #d97706 60%, #b45309 100%);
-  border-color: #fde68a;
-  box-shadow: 0 0 6px rgba(245, 158, 11, 0.8), 0 0 12px rgba(245, 158, 11, 0.4);
+  background: radial-gradient(circle at 35% 35%, #fbbf24 0%, #b45309 55%, #451a03 100%);
+  border-color: #fef08a;
+  box-shadow: 
+    0 2px 5px rgba(0, 0, 0, 0.9),
+    0 0 6px rgba(245, 158, 11, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.7),
+    inset 0 -1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .targetable-hero {
@@ -573,160 +618,109 @@
     --card-width: 67px;
     --card-height: 96px;
   }
-  .card { padding: 2px; }
-  .card-img { height: 26px; }
-  .card-header { font-size: 0.55rem; }
-  .card-cost { width: 12px; height: 12px; font-size: 0.48rem; }
-  .card-name { font-size: 0.5rem; margin: 0; }
-  .card-orb { width: 19px; height: 19px; }
-  .orb-atk { bottom: -3px; left: -3px; }
-  .orb-hp { bottom: -3px; right: -3px; }
-  .orb-val { font-size: 0.62rem; }
-  .hand-zone { min-height: 102px; padding-bottom: 14px; }
-}
-
-/* --------------------------------------------------
-   カードデザイン (高級感溢れるオーブ & レイアウト調整)
--------------------------------------------------- */
-.card {
-  width: var(--card-width);
-  height: var(--card-height);
-  border-radius: 6px;
-  padding: 3px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start; /* 上から順にレイアウト */
-  position: relative;
-  cursor: pointer;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85);
-  border: 1.5px solid rgba(212, 175, 55, 0.4);
-  background: linear-gradient(180deg, #1f2822 0%, #0d120e 100%);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-  overflow: visible !important;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: bold;
-  font-size: 0.62rem;
-  z-index: 3;
-  line-height: 1;
-  height: 14px;
-  margin-bottom: 2px;
-}
-
-/* カード上面半分に収まるイラストコンテナ */
-.card-img-container {
-  width: 100%;
-  height: 42px; /* カード全体の約半分に収める */
-  position: relative;
-  overflow: hidden;
-  border-radius: 3px;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  background: #000;
-  flex-shrink: 0;
-}
-
-.card-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events: none;
-}
-
-/* イラストの少し下に配置されるカード名 */
-.card-name {
-  font-size: 0.58rem;
-  text-align: center;
-  font-weight: bold;
-  line-height: 1.2;
-  color: var(--gold-light);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 3px;
-  z-index: 3;
-}
-
-/* --------------------------------------------------
-   高級ジュエルドーム & 重厚メタリックフレーム オーブ
--------------------------------------------------- */
-.card-orb {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  box-sizing: border-box;
-  user-select: none;
-  pointer-events: none;
-  transition: all 0.25s ease;
-}
-
-.orb-val {
-  font-family: 'Cinzel', Georgia, serif;
-  font-size: 0.68rem;
-  font-weight: 900;
-  color: #ffffff;
-  text-shadow: 0 1px 2px #000, 0 0 4px rgba(0,0,0,0.9);
-  line-height: 1;
-  z-index: 2;
-}
-
-/* --- 左下: 攻撃力 (アンティークゴールド枠 + 漆黒ルビー) --- */
-.orb-atk {
-  bottom: -2px;
-  left: -2px;
-  background: radial-gradient(circle at 35% 35%, #ff4d4d 0%, #b91c1c 55%, #450a0a 100%);
-  border: 1.5px solid #fef08a; /* 黄金の重厚フレーム */
-  box-shadow: 
-    0 2px 5px rgba(0, 0, 0, 0.9),
-    0 0 6px rgba(220, 38, 38, 0.6),
-    inset 0 1px 2px rgba(255, 255, 255, 0.7),
-    inset 0 -1px 3px rgba(0, 0, 0, 0.8);
-}
-
-/* --- 右下: HP (アンティークゴールド枠 + 深海エメラルド) --- */
-.orb-hp {
-  bottom: -2px;
-  right: -2px;
-  background: radial-gradient(circle at 35% 35%, #34d399 0%, #047857 55%, #022c22 100%);
-  border: 1.5px solid #fef08a; /* 黄金の重厚フレーム */
-  box-shadow: 
-    0 2px 5px rgba(0, 0, 0, 0.9),
-    0 0 6px rgba(16, 185, 129, 0.6),
-    inset 0 1px 2px rgba(255, 255, 255, 0.7),
-    inset 0 -1px 3px rgba(0, 0, 0, 0.8);
-}
-
-/* ダメージ時のHPオーブ (アンバー/トパーズ) */
-.orb-hp.damaged {
-  background: radial-gradient(circle at 35% 35%, #fbbf24 0%, #b45309 55%, #451a03 100%);
-  border-color: #fef08a;
-  box-shadow: 
-    0 2px 5px rgba(0, 0, 0, 0.9),
-    0 0 6px rgba(245, 158, 11, 0.6),
-    inset 0 1px 2px rgba(255, 255, 255, 0.7),
-    inset 0 -1px 3px rgba(0, 0, 0, 0.8);
-}
-
-/* スマホ表示でのサイズ調整 */
-@media (max-width: 480px) {
-  :root {
-    --card-width: 67px;
-    --card-height: 96px;
-  }
   .card-img-container { height: 38px; }
   .card-name { font-size: 0.52rem; margin-top: 2px; }
   .card-orb { width: 18px; height: 18px; bottom: -2px; }
   .orb-atk { left: -2px; }
   .orb-hp { right: -2px; }
   .orb-val { font-size: 0.62rem; }
+  .hand-zone { min-height: 102px; padding-bottom: 14px; }
+}
+
+/* ===================================================
+   🔥🌊🍃 高コスト召喚：カード発光 ＆ 属性爆発エフェクト (0.5秒)
+===================================================== */
+
+/* 1. カード本体を一瞬神々しく発光させる */
+.card-summon-flash {
+  animation: cardSummonFlashAnim 0.45s ease-out !important;
+}
+@keyframes cardSummonFlashAnim {
+  0% { filter: brightness(3.5) drop-shadow(0 0 20px #fff); transform: scale(1.15); }
+  100% { filter: brightness(1) drop-shadow(0 0 0 transparent); transform: scale(1); }
+}
+
+/* 2. カード中心起点のVFXアンカー */
+.vfx-card-anchor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9000;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+}
+
+/* --- 🔥 赤属性：爆炎スパイラル ＆ 火の粉 --- */
+.vfx-flame-vortex {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0%, #ff1100 25%, #ffea00 50%, #ff4500 75%, transparent 100%);
+  filter: drop-shadow(0 0 16px #ff2200);
+  mask-image: radial-gradient(circle, transparent 25%, black 70%);
+  -webkit-mask-image: radial-gradient(circle, transparent 25%, black 70%);
+  animation: flameVortexAnim 0.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+@keyframes flameVortexAnim {
+  0% { transform: scale(0.1) rotate(0deg); opacity: 0; }
+  40% { opacity: 1; transform: scale(1.5) rotate(180deg); }
+  100% { transform: scale(2.4) rotate(360deg); opacity: 0; }
+}
+
+.vfx-spark {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: #ffea00;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ff3300;
+  animation: sparkFly 0.45s ease-out forwards;
+}
+@keyframes sparkFly {
+  0% { transform: translate(0, 0) scale(1.5); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0.1); opacity: 0; }
+}
+
+/* --- 🌊 青属性：2重アクアバースト ＆ 大水滴 --- */
+.vfx-water-splash {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 5px solid #38bdf8;
+  box-shadow: 0 0 25px #0284c7, inset 0 0 20px #e0f2fe;
+  animation: waterSplashAnim 0.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+@keyframes waterSplashAnim {
+  0% { transform: scale(0.1); opacity: 0; border-width: 12px; }
+  35% { opacity: 1; border-width: 6px; }
+  100% { transform: scale(2.2); opacity: 0; border-width: 1px; }
+}
+
+.vfx-droplet {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  background: #bae6fd;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #38bdf8;
+  animation: dropletFly 0.48s ease-out forwards;
+}
+@keyframes dropletFly {
+  0% { transform: translate(0, 0) scale(1.2); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; }
+}
+
+/* --- 🍃 緑属性：木葉トルネード ＆ 黄金胞子 --- */
+.vfx-leaf-particle {
+  position: absolute;
+  width: 14px;
+  height: 8px;
+  background: linear-gradient(135deg, #4ade80, #15803d);
+  border-radius: 12px 2px 12px 2px;
+  box-shadow: 0 0 8px #22c55e;
+  animation: leafTornadoAnim 0.55s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+@keyframes leafTornadoAnim {
+  0% { transform: translate(0, 15px) rotate(0deg) scale(0.2); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1.4); opacity: 0; }
 }

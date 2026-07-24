@@ -35,8 +35,8 @@ const CARD_DATA = [
   { name: "タガメ",     cost: 3, atk: 2, hp: 6, element: "blue",  ability: "",   image: "images/tagame.png" },
   { name: "ミズカマキリ",cost: 4, atk: 4, hp: 8, element: "blue",  ability: "charge",  image: "images/mizu.png" },
     { name: "モルフォチョウ", cost: 4, atk: 2, hp: 7, element: "blue",  ability: "drain",   image: "images/mol.jpg" },
-  { name: "タランチュラ",cost: 5, atk: 3, hp: 10,element: "blue",  ability: "", image: "images/tara.jpg" },
-{ name: "ハンミョウ",   cost: 5, atk: 6, hp: 6, element: "blue",  ability: "taunt",    image: "images/han.jpg" },
+  { name: "タランチュラ",cost: 5, atk: 3, hp: 9,element: "blue",  ability: "", image: "images/tara.jpg" },
+{ name: "ギラファ",   cost: 6, atk: 4, hp: 12, element: "blue",  ability: "",    image: "images/gira.jpg" },
 
 
 
@@ -554,6 +554,7 @@ function processAction(role, action, payload) {
     G.foodSetThisTurn = true;
     log(`${role === myRole ? 'あなた' : '相手'}は[${card.name}]をマナに置いた`);
   } 
+ // --- js/api.js 内の processAction (PLAY_CARDの箇所) ---
   else if (action === 'PLAY_CARD') {
     let card = p.hand[payload.handIndex];
 
@@ -574,10 +575,20 @@ function processAction(role, action, payload) {
         card.exhausted = (card.ability !== 'charge');
         p.field.push(card);
 
-        if (card.cost >= 5) {
+        // 🌟 コスト6以上：カード位置から属性エフェクト（炎の渦/水しぶき/木葉竜巻）が噴き出す
+        if (card.cost >= 6) {
+          setTimeout(() => {
+            playHighCostSummonEffect(card.id, card.element);
+            if (!isVsCPU && conn && conn.open) {
+              conn.send({ type: 'EFFECT_HIGH_COST_SUMMON', cardId: card.id, element: card.element });
+            }
+          }, 80);
+        }
+        // 🌟 コスト5：通常の黄色い衝撃波演出
+        else if (card.cost === 5) {
           setTimeout(() => {
             playSummonImpactByCardId(card.id);
-            if (conn && conn.open) {
+            if (!isVsCPU && conn && conn.open) {
               conn.send({ type: 'EFFECT_SUMMON_IMPACT', cardId: card.id });
             }
           }, 100);
