@@ -1,3 +1,7 @@
+// ==========================================
+// network.js (ネットワーク通信専門)
+// ==========================================
+
 let peer = null, conn = null;
 
 window.createRoom = function() {
@@ -96,19 +100,28 @@ function setupConnection() {
 }
 
 function sendState() {
+  if (isVsCPU) {
+    render();
+    return;
+  }
   if (isHost) {
-    // conn が存在し、通信が開いている時のみ送信
     if (typeof conn !== 'undefined' && conn && conn.open) {
       conn.send({ type: 'SYNC', state: G });
     }
-    // 画面の再描画は必ず実行する
     render();
   }
 }
 
 function sendAction(action, payload) {
-  if (isHost) processAction(myRole, action, payload);
-  else conn.send({ type: 'ACTION', role: myRole, action, payload });
+  if (isVsCPU) {
+    processAction(myRole, action, payload);
+  } else {
+    if (isHost) {
+      processAction(myRole, action, payload);
+    } else {
+      conn.send({ type: 'ACTION', role: myRole, action, payload });
+    }
+  }
 }
 
 function handleNetworkData(data) {
@@ -137,8 +150,6 @@ function handleNetworkData(data) {
     playAttackBugEffect(data.defenderId, data.damageText, data.isDestroyed, data.isCritical, data.element);
   } else if (data.type === 'EFFECT_SUMMON_IMPACT') {
     playSummonImpactByCardId(data.cardId);
-  } else if (data.type === 'EFFECT_LEGEND_SUMMON') { // ← これを追加！
-    playLegendarySummonVfx(data.card);               // ← これを追加！
   } else if (data.type === 'EFFECT_HERO') {
     const oppInfoBox = document.getElementById('opponent-info-box');
     if (oppInfoBox) showDamageEffect(oppInfoBox, 'ライフ-1!');

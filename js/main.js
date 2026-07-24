@@ -1,4 +1,7 @@
-// --- UIボタンイベントリスナーの登録 ---
+// ==========================================
+// main.js (起動エントリー ＆ イベントリスナー)
+// ==========================================
+
 function initUIEvents() {
   const btnActFood = document.getElementById('btn-act-food');
   const btnActPlay = document.getElementById('btn-act-play');
@@ -38,11 +41,13 @@ function initUIEvents() {
 
   if (btnEndTurn) {
     btnEndTurn.onclick = () => {
-      selectedHandIndex = null;
-      selectedAttackerCardId = null;
-      clearTargetArrow();
-      toggleActionModal();
-      sendAction('END_TURN');
+      if (!G.gameOver && G.turn === myRole) {
+        selectedHandIndex = null;
+        selectedAttackerCardId = null;
+        clearTargetArrow();
+        toggleActionModal();
+        sendAction('END_TURN');
+      }
     };
   }
 
@@ -59,7 +64,7 @@ function initUIEvents() {
     };
   }
 
-if (btnRematch) {
+  if (btnRematch) {
     btnRematch.onclick = () => {
       if (isVsCPU) {
         let cpuDeckNames = [];
@@ -76,7 +81,7 @@ if (btnRematch) {
 
   if (btnHome) {
     btnHome.onclick = () => {
-      if (conn && conn.open) {
+      if (typeof conn !== 'undefined' && conn && conn.open) {
         conn.send({ type: 'LEAVE_GAME' });
       }
       location.reload();
@@ -84,7 +89,6 @@ if (btnRematch) {
   }
 }
 
-// --- アプリケーション起動処理 ---
 function startApp() {
   loadCustomDeck();
   initAvatarSelection();

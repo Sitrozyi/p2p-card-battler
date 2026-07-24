@@ -1,3 +1,7 @@
+// ==========================================
+// ui.js (画面描画 ＆ UIアニメーション専門)
+// ==========================================
+
 // --- BGM / SE ---
 let bgmAudio = new Audio(BGM_PATH);
 bgmAudio.loop = true; bgmAudio.volume = 0.4;
@@ -385,7 +389,7 @@ function openCardPreview(cardData) {
     taunt: "【挑発】相手はこのカードしか攻撃・ダイレクトアタックできない。",
     charge: "【速攻】召喚したターンにすぐ攻撃できる。",
     revenge: "【道連れ】このカードが撃破された時、攻撃してきた相手も道連れで撃破する。",
-    drain: "【回復】攻撃した時、自身のHPを+3回復する。",
+    drain: "【回復】攻撃した時、自身のHPを+2回復する。",
     draw: "【1ドロー】召喚した時、山札からカードを1枚引く。",
     coin: "【樹液コイン】コスト0。使うとこのターンの使用可能コストが+1増える。"
   };
@@ -486,7 +490,7 @@ function play3DCoinFlipAnimation(firstRole, secondRole, callback) {
 
     setTimeout(() => {
       resultText.innerText = isMyFirst ? "あなたは【先攻】です！" : "あなたは【後攻】です！（樹液コイン獲得）";
-      setTimeout(() => { modal.classList.add('hidden'); if (callback && isHost) callback(); }, 1200);
+      setTimeout(() => { modal.classList.add('hidden'); if (callback) callback(); }, 1200);
     }, 1600);
   }, 50);
 }
@@ -505,6 +509,64 @@ function playSummonImpactByCardId(cardId) {
   if (targetCardEl) showSummonImpactEffect(targetCardEl);
 }
 
+function playHighCostSummonEffect(cardId, element) {
+  const cardEl = document.querySelector(`.card[data-card-id="${cardId}"]`);
+  if (!cardEl) return;
+
+  const rect = cardEl.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+
+  cardEl.classList.add('legend-card-landing');
+  setTimeout(() => cardEl.classList.remove('legend-card-landing'), 500);
+
+  const board = document.getElementById('game-board');
+  if (board) {
+    board.classList.add('legend-earthquake-shake');
+    setTimeout(() => board.classList.remove('legend-earthquake-shake'), 600);
+  }
+
+  const anchor = document.createElement('div');
+  anchor.className = 'vfx-card-anchor';
+  anchor.style.left = centerX + 'px';
+  anchor.style.top = centerY + 'px';
+
+  const shockwave = document.createElement('div');
+  shockwave.className = 'legend-ground-shockwave';
+  
+  if (element === 'red') {
+    shockwave.style.borderColor = '#ff3300';
+    shockwave.style.boxShadow = '0 0 20px #ff1100';
+  } else if (element === 'blue') {
+    shockwave.style.borderColor = '#38bdf8';
+    shockwave.style.boxShadow = '0 0 20px #0284c7';
+  } else {
+    shockwave.style.borderColor = '#34d399';
+    shockwave.style.boxShadow = '0 0 20px #10b981';
+  }
+  anchor.appendChild(shockwave);
+
+  const auraEl = document.createElement('div');
+  if (element === 'red') {
+    auraEl.className = 'legend-aura-red';
+  } else if (element === 'blue') {
+    auraEl.className = 'legend-aura-blue';
+  } else {
+    auraEl.className = 'legend-aura-green';
+  }
+  anchor.appendChild(auraEl);
+
+  document.body.appendChild(anchor);
+
+  if (typeof triggerSE === 'function') {
+    triggerSE('destroy');
+  }
+
+  setTimeout(() => {
+    if (anchor.parentNode) anchor.parentNode.removeChild(anchor);
+  }, 750);
+}
+
 function log(msg) {
   const logEl = document.getElementById('log');
   if (logEl) logEl.innerText = msg;
@@ -512,6 +574,8 @@ function log(msg) {
 
 // --- メインレンダラー ---
 function render() {
+  if (!G || !G.players || !myRole || !G.players[myRole]) return;
+
   let isMyTurn = G.turn === myRole, me = G.players[myRole];
   let oppRole = myRole === 'host' ? 'guest' : 'host', opp = G.players[oppRole];
 
@@ -540,22 +604,32 @@ function render() {
   renderManaJewels('my-food', me.mana, me.maxMana);
   renderManaJewels('opp-food', opp.mana, opp.maxMana);
 
-  // 手札
+  // 手札描画
   const handEl = document.getElementById('my-hand');
   if (handEl) {
     handEl.innerHTML = '';
     me.hand.forEach((card, idx) => {
       let cardEl = createCardEl(card, false);
-      if (isMyTurn && ((card.ability !== 'coin' && me.mana >= card.cost && me.field.length < 5) || card.ability === 'coin') && !G.gameOver) {
+      
+      // コスト条件判定 (コインはコスト0で常に使用可能)
+      let isPlayable = isMyTurn && !G.gameOver && (
+        card.ability === 'coin' || (me.mana >= card.cost && me.field.length < 3)
+      );
+
+      if (isPlayable) {
         cardEl.classList.add('playable');
       }
-      if (selectedHandIndex === idx) cardEl.classList.add('selected');
+      if (selectedHandIndex === idx) {
+        cardEl.classList.add('selected');
+      }
 
       attachCardInteraction(cardEl, card, () => {
         if (!isMyTurn || G.gameOver) return;
         selectedHandIndex = (selectedHandIndex === idx) ? null : idx;
-        selectedAttackerCardId = null; clearTargetArrow();
-        render(); toggleActionModal();
+        selectedAttackerCardId = null; 
+        clearTargetArrow();
+        render(); 
+        toggleActionModal();
       });
       handEl.appendChild(cardEl);
     });
@@ -674,53 +748,44 @@ function createCardEl(card, isFood = false) {
   const elemText = { red: '赤', blue: '青', green: '緑' }[card.element] || '';
   const abilityLabels = { taunt: "挑発", charge: "速攻", revenge: "道連れ", drain: "回復", draw: "1ドロー", coin: "コイン" };
 
-  if (isFood) {
-    el.innerHTML = `
-      <div class="card-header">
-        <div class="card-cost">${card.cost}</div>
-        <div class="card-element">${elemText}</div>
-      </div>
-      <div class="card-img-container">
-        <img class="card-img" src="${card.image}" alt="${card.name}">
-      </div>
-    `;
-  } else {
-    const maxHpVal = card.maxHp !== undefined ? card.maxHp : card.hp;
-    const isHpDamaged = (card.hp < maxHpVal);
-    const abilityHtml = card.ability ? `<div class="card-ability ${card.ability}">${abilityLabels[card.ability]}</div>` : `<div></div>`;
+  const maxHpVal = card.maxHp !== undefined ? card.maxHp : card.hp;
+  const isHpDamaged = (card.hp < maxHpVal);
+  const abilityHtml = card.ability ? `<div class="card-ability ${card.ability}">${abilityLabels[card.ability]}</div>` : `<div></div>`;
 
-    el.innerHTML = `
-      <div class="card-header">
-        <div class="card-cost">${card.cost}</div>
-        ${abilityHtml}
-        <div class="card-element">${elemText}</div>
-      </div>
-      
-      <div class="card-img-container">
-        <img class="card-img" src="${card.image}" alt="${card.name}">
-      </div>
-      
-      <div class="card-name">${card.name}</div>
+  el.innerHTML = `
+    <div class="card-header">
+      <div class="card-cost">${card.cost}</div>
+      ${abilityHtml}
+      <div class="card-element">${elemText}</div>
+    </div>
+    
+    <div class="card-img-container">
+      <img class="card-img" src="${card.image}" alt="${card.name}">
+    </div>
+    
+    <div class="card-name">${card.name}</div>
 
-      <div class="card-orb orb-atk" title="攻撃力">
-        <span class="orb-val">${card.atk}</span>
-      </div>
-      
-      <div class="card-orb orb-hp ${isHpDamaged ? 'damaged' : ''}" title="HP">
-        <span class="orb-val">${card.hp}</span>
-      </div>
-    `;
-  }
+    <div class="card-orb orb-atk" title="攻撃力">
+      <span class="orb-val">${card.atk}</span>
+    </div>
+    
+    <div class="card-orb orb-hp ${isHpDamaged ? 'damaged' : ''}" title="HP">
+      <span class="orb-val">${card.hp}</span>
+    </div>
+  `;
+
   return el;
 }
 
 function toggleActionModal() {
   const modal = document.getElementById('action-modal');
   if (!modal) return;
-  if (selectedHandIndex !== null && !G.gameOver) {
+  if (selectedHandIndex !== null && !G.gameOver && G.players[myRole].hand[selectedHandIndex]) {
     modal.classList.remove('hidden');
     let card = G.players[myRole].hand[selectedHandIndex];
-    let isFieldFull = G.players[myRole].field.length >= 5;
+    let me = G.players[myRole];
+    
+    let isFieldFull = me.field.length >= 3;
     document.getElementById('action-modal-card-name').innerText = `[${card.name}] の操作`;
 
     const btnFood = document.getElementById('btn-act-food');
@@ -731,172 +796,16 @@ function toggleActionModal() {
       btnPlay.disabled = false;
       btnPlay.innerText = "使う (コスト+1)";
     } else {
-      btnPlay.disabled = (G.players[myRole].mana < card.cost) || isFieldFull;
-      btnPlay.innerText = isFieldFull ? "場に出す (上限5枚)" : "場に出す";
+      let isManaShort = me.mana < card.cost;
+      btnPlay.disabled = isManaShort || isFieldFull;
+      
+      if (isFieldFull) {
+        btnPlay.innerText = "場に出す (上限3枚)";
+      } else if (isManaShort) {
+        btnPlay.innerText = `マナ不足 (コスト:${card.cost})`;
+      } else {
+        btnPlay.innerText = "場に出す";
+      }
     }
   } else { modal.classList.add('hidden'); }
-}
-
-// --- UIイベント登録 ---
-// ==========================================
-// main.js (全体の起動制御とUIイベント)
-// ==========================================
-
-function initUIEvents() {
-  const btnActFood = document.getElementById('btn-act-food');
-  const btnActPlay = document.getElementById('btn-act-play');
-  const btnActCancel = document.getElementById('btn-act-cancel');
-  const btnEndTurn = document.getElementById('btn-end-turn');
-  const btnSurrender = document.getElementById('btn-surrender');
-  const btnRematch = document.getElementById('btn-rematch');
-  const btnHome = document.getElementById('btn-home');
-
-  if (btnActFood) {
-    btnActFood.onclick = () => {
-      if (selectedHandIndex !== null) {
-        sendAction('SET_FOOD', { handIndex: selectedHandIndex });
-        selectedHandIndex = null;
-        toggleActionModal();
-      }
-    };
-  }
-
-  if (btnActPlay) {
-    btnActPlay.onclick = () => {
-      if (selectedHandIndex !== null) {
-        sendAction('PLAY_CARD', { handIndex: selectedHandIndex });
-        selectedHandIndex = null;
-        toggleActionModal();
-      }
-    };
-  }
-
-  if (btnActCancel) {
-    btnActCancel.onclick = () => {
-      selectedHandIndex = null;
-      toggleActionModal();
-      render();
-    };
-  }
-
-  if (btnEndTurn) {
-    btnEndTurn.onclick = () => {
-      if (!G.gameOver && G.turn === myRole) {
-        selectedHandIndex = null;
-        selectedAttackerCardId = null;
-        clearTargetArrow();
-        toggleActionModal();
-        sendAction('END_TURN');
-      }
-    };
-  }
-
-  if (btnSurrender) {
-    btnSurrender.onclick = () => {
-      if (G.gameOver) return;
-      if (confirm("本当にサレンダー（降参）しますか？")) {
-        selectedHandIndex = null;
-        selectedAttackerCardId = null;
-        clearTargetArrow();
-        toggleActionModal();
-        sendAction('SURRENDER');
-      }
-    };
-  }
-
-  if (btnRematch) {
-    btnRematch.onclick = () => {
-      if (isVsCPU) {
-        let cpuDeckNames = [];
-        for (let i = 0; i < 25; i++) {
-          cpuDeckNames.push(CARD_DATA[Math.floor(Math.random() * CARD_DATA.length)].name);
-        }
-        initGame(cpuDeckNames);
-        render();
-      } else {
-        sendAction('REMATCH');
-      }
-    };
-  }
-
-  if (btnHome) {
-    btnHome.onclick = () => {
-      if (typeof conn !== 'undefined' && conn && conn.open) {
-        conn.send({ type: 'LEAVE_GAME' });
-      }
-      location.reload();
-    };
-  }
-}
-
-function startApp() {
-  loadCustomDeck();
-  initAvatarSelection();
-  initUIEvents();
-  initBGMOnFirstTouch();
-  initFireflies();
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', startApp);
-} else {
-  startApp();
-}
-
-function playHighCostSummonEffect(cardId, element) {
-  const cardEl = document.querySelector(`.card[data-card-id="${cardId}"]`);
-  if (!cardEl) return;
-
-  const rect = cardEl.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-
-  cardEl.classList.add('legend-card-landing');
-  setTimeout(() => cardEl.classList.remove('legend-card-landing'), 500);
-
-  const board = document.getElementById('game-board');
-  if (board) {
-    board.classList.add('legend-earthquake-shake');
-    setTimeout(() => board.classList.remove('legend-earthquake-shake'), 600);
-  }
-
-  const anchor = document.createElement('div');
-  anchor.className = 'vfx-card-anchor';
-  anchor.style.left = centerX + 'px';
-  anchor.style.top = centerY + 'px';
-
-  const shockwave = document.createElement('div');
-  shockwave.className = 'legend-ground-shockwave';
-  
-  if (element === 'red') {
-    shockwave.style.borderColor = '#ff3300';
-    shockwave.style.boxShadow = '0 0 20px #ff1100';
-  } else if (element === 'blue') {
-    shockwave.style.borderColor = '#38bdf8';
-    shockwave.style.boxShadow = '0 0 20px #0284c7';
-  } else {
-    shockwave.style.borderColor = '#34d399';
-    shockwave.style.boxShadow = '0 0 20px #10b981';
-  }
-  anchor.appendChild(shockwave);
-
-  const auraEl = document.createElement('div');
-  if (element === 'red') {
-    auraEl.className = 'legend-aura-red';
-  } else if (element === 'blue') {
-    auraEl.className = 'legend-aura-blue';
-  } else {
-    auraEl.className = 'legend-aura-green';
-  }
-  anchor.appendChild(auraEl);
-
-  document.body.appendChild(anchor);
-
-  if (typeof triggerSE === 'function') {
-    triggerSE('destroy');
-  }
-
-  setTimeout(() => {
-    if (anchor.parentNode) anchor.parentNode.removeChild(anchor);
-  }, 750);
 }
