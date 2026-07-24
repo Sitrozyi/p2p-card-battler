@@ -1,7 +1,4 @@
-// ==========================================
-// api.js (マスターデータ ＆ ゲームコアロジック)
-// ==========================================
-
+// --- マスターデータ ---
 const BGM_PATH = 'music/1.mp3';
 
 const AVATAR_PRESETS = [
@@ -25,31 +22,34 @@ const JUETI_COIN_CARD = {
 };
 
 const CARD_DATA = [
-  { name: "アリ",       cost: 1, atk: 2, hp: 1, element: "red",   ability: "draw",   image: "images/ant.jpg" },
-  { name: "クワガタ",   cost: 2, atk: 3, hp: 3, element: "red",   ability: "",       image: "images/kuwagata.jpg" },
-  { name: "カブトムシ", cost: 3, atk: 4, hp: 5, element: "red",   ability: "taunt",  image: "images/kabuto.jpg" },
-  { name: "アカオニグモ", cost: 3, atk: 5, hp: 4, element: "red",   ability: "charge", image: "images/aka.jpg" },
-  { name: "スズメバチ", cost: 4, atk: 5, hp: 6, element: "red",   ability: "charge", image: "images/suzu.jpg" },
-  { name: "ムカデ",     cost: 5, atk: 6, hp: 7, element: "red",   ability: "",       image: "images/omu.jpg" },
-  { name: "女王バチ",   cost: 6, atk: 8, hp: 7, element: "red",   ability: "charge", image: "images/zyo.jpg" },
+  { name: "アリ",       cost: 1, atk: 2, hp: 1, element: "red",   ability: "draw",    image: "images/ant.jpg" },
+  { name: "クワガタ",   cost: 2, atk: 3, hp: 3, element: "red",   ability: "",   image: "images/kuwagata.jpg" },
+  { name: "カブトムシ", cost: 3, atk: 4, hp: 5, element: "red",   ability: "taunt",   image: "images/kabuto.jpg" },
+   { name: "アカオニグモ", cost: 3, atk: 5, hp: 4, element: "red",   ability: "charge",  image: "images/aka.jpg" },
+  { name: "スズメバチ", cost: 4, atk: 5, hp: 6, element: "red",   ability: "charge",  image: "images/suzu.jpg" },
+  { name: "ムカデ",     cost: 5, atk: 6, hp: 7, element: "red",   ability: "", image: "images/omu.jpg" },
+ { name: "女王バチ", cost: 6, atk: 8, hp: 7, element: "red",   ability: "charge",   image: "images/zyo.jpg" },
 
-  { name: "アメンボ",   cost: 1, atk: 1, hp: 3, element: "blue",  ability: "",       image: "images/amen.jpg" },
-  { name: "ゲンゴロウ", cost: 2, atk: 2, hp: 4, element: "blue",  ability: "drain",  image: "images/gengo.jpg" },
-  { name: "タガメ",     cost: 3, atk: 2, hp: 6, element: "blue",  ability: "",       image: "images/tagame.png" },
-  { name: "ミズカマキリ",cost: 4, atk: 4, hp: 8, element: "blue",  ability: "charge", image: "images/mizu.png" },
-  { name: "モルフォチョウ", cost: 4, atk: 2, hp: 7, element: "blue",  ability: "drain",  image: "images/mol.jpg" },
-  { name: "タランチュラ",cost: 5, atk: 3, hp: 9, element: "blue",  ability: "",       image: "images/tara.jpg" },
-  { name: "ギラファ",   cost: 6, atk: 4, hp: 12, element: "blue",  ability: "",       image: "images/gira.jpg" },
+  { name: "アメンボ",   cost: 1, atk: 1, hp: 3, element: "blue",  ability: "",    image: "images/amen.jpg" },
+  { name: "ゲンゴロウ", cost: 2, atk: 2, hp: 4, element: "blue",  ability: "drain",   image: "images/gengo.jpg" },
+  { name: "タガメ",     cost: 3, atk: 2, hp: 6, element: "blue",  ability: "",   image: "images/tagame.png" },
+  { name: "ミズカマキリ",cost: 4, atk: 4, hp: 8, element: "blue",  ability: "charge",  image: "images/mizu.png" },
+    { name: "モルフォチョウ", cost: 4, atk: 2, hp: 7, element: "blue",  ability: "drain",   image: "images/mol.jpg" },
+  { name: "タランチュラ",cost: 5, atk: 3, hp: 9,element: "blue",  ability: "", image: "images/tara.jpg" },
+{ name: "ギラファ",   cost: 6, atk: 4, hp: 12, element: "blue",  ability: "",    image: "images/gira.jpg" },
 
-  { name: "バッタ",     cost: 1, atk: 2, hp: 2, element: "green", ability: "",       image: "images/bat.png" },
-  { name: "キリギリス", cost: 2, atk: 3, hp: 3, element: "green", ability: "drain",  image: "images/ki.png" },
-  { name: "カマキリ",   cost: 3, atk: 4, hp: 4, element: "green", ability: "",       image: "images/kama.png" },
-  { name: "オニヤンマ", cost: 4, atk: 5, hp: 6, element: "green", ability: "charge",  image: "images/oni.png" },
-  { name: "カミキリムシ", cost: 5, atk: 6, hp: 6, element: "green", ability: "",      image: "images/kami.jpg" },
-  { name: "魔王カマキリ", cost: 6, atk: 8, hp: 8, element: "green", ability: "drain",  image: "images/mao.jpg" }
+
+
+  { name: "バッタ",     cost: 1, atk: 2, hp: 2, element: "green", ability: "",    image: "images/bat.png" },
+  { name: "キリギリス", cost: 2, atk: 3, hp: 3, element: "green", ability: "drain",   image: "images/ki.png" },
+  { name: "カマキリ",   cost: 3, atk: 4, hp: 4, element: "green", ability: "",  image: "images/kama.png" },
+  { name: "オニヤンマ", cost: 4, atk: 5, hp: 6, element: "green", ability: "charge", image: "images/oni.png" },
+  { name: "カミキリムシ", cost: 5, atk: 6, hp: 6, element: "green", ability: "",   image: "images/kami.jpg" },
+ { name: "魔王カマキリ", cost: 6, atk: 8, hp: 8, element: "green", ability: "drain",   image: "images/mao.jpg" },
+
 ];
-
-// --- グローバル状態変数 (最上部で宣言) ---
+// --- グローバル状態変数 ---
+let peer = null, conn = null;
 let isHost = false;
 let myRole = '';
 let isVsCPU = false; 
@@ -59,7 +59,6 @@ let selectedAvatarIndex = 0;
 let currentBiome = 'forest';
 let myCustomDeckNames = [];
 let lastRenderTurn = null;
-let isInitializingGame = false; // 二重実行防止フラグ
 
 let G = {
   turn: 'host',
@@ -80,7 +79,7 @@ function loadCustomDeck() {
       myCustomDeckNames = JSON.parse(saved);
     } catch(e) {}
   }
-  if (!Array.isArray(myCustomDeckNames) || myCustomDeckNames.length !== 25) {
+  if (!myCustomDeckNames || myCustomDeckNames.length !== 25) {
     resetDeckToDefaultData();
   }
   updateLobbyDeckCount();
@@ -99,18 +98,10 @@ function saveCustomDeck() {
   updateLobbyDeckCount();
 }
 
-// デッキ生成（25枚保証 ＆ 初手にコスト1〜2のカードを確定で引けるよう自動マウント）
 function createDeckFromNames(nameList, role) {
-  let list = [...(nameList || [])];
-  
-  while (list.length < 25) {
-    list.push(CARD_DATA[Math.floor(Math.random() * CARD_DATA.length)].name);
-  }
-  if (list.length > 25) list = list.slice(0, 25);
-
   let deck = [];
   let idCounter = 1;
-  list.forEach(name => {
+  nameList.forEach(name => {
     let base = CARD_DATA.find(c => c.name === name) || CARD_DATA[0];
     deck.push({ 
       ...base, 
@@ -120,18 +111,7 @@ function createDeckFromNames(nameList, role) {
       exhausted: false 
     });
   });
-  
-  // シャッフル
-  deck.sort(() => Math.random() - 0.5);
-
-  // 事故防止：コスト1〜2のカードが山札の後半にしかなければ前に寄せる
-  let lowCostIdx = deck.findIndex(c => c.cost <= 2);
-  if (lowCostIdx > 8) {
-    let lowCard = deck.splice(lowCostIdx, 1)[0];
-    deck.splice(6, 0, lowCard); // 初期手札のゾーンに挿入
-  }
-
-  return deck;
+  return deck.sort(() => Math.random() - 0.5);
 }
 
 window.changeBiome = function(biomeKey) {
@@ -141,10 +121,7 @@ window.changeBiome = function(biomeKey) {
     sendState();
   }
 };
-
 window.startCPUMode = function() {
-  if (isInitializingGame) return;
-  
   playBGM();
   loadCustomDeck();
   initAudio();
@@ -189,7 +166,7 @@ async function runCPUTurn() {
 
   const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
-  // 樹液コインがあれば優先使用
+  // 樹液コインがあれば使用
   let coinIdx = cpu.hand.findIndex(c => c.ability === 'coin');
   if (coinIdx !== -1) {
     processAction('guest', 'PLAY_CARD', { handIndex: coinIdx });
@@ -197,9 +174,9 @@ async function runCPUTurn() {
     await delay(500);
   }
 
-  // 出せるカードを出す (最大3枚まで)
+  // コストが足りる限り手札からカードを出す
   let canPlay = true;
-  while (canPlay && cpu.field.length < 3 && !G.gameOver) {
+  while (canPlay && cpu.field.length < 5 && !G.gameOver) {
     let playableIndices = [];
     cpu.hand.forEach((c, idx) => {
       if (c.cost <= cpu.mana) playableIndices.push(idx);
@@ -216,7 +193,6 @@ async function runCPUTurn() {
     }
   }
 
-  // 攻撃可能な虫で攻撃
   let attackers = cpu.field.filter(c => !c.exhausted);
   for (let attacker of attackers) {
     if (G.gameOver || G.turn !== 'guest') break;
@@ -246,33 +222,261 @@ async function runCPUTurn() {
     render();
   }
 }
-
-// ゲーム初期化（初期手札4枚厳格固定）
-function initGame(guestDeckNames = null) {
-  if (isInitializingGame) return;
-  isInitializingGame = true;
-
+// --- WebRTC 通信制御 ---
+window.createRoom = function() {
+  playBGM();
   loadCustomDeck();
+  const btnCreate = document.getElementById('btn-create');
+  const statusMsg = document.getElementById('status-msg');
+  const copyIdBtn = document.getElementById('host-id-btn');
+  const copyIdContainer = document.getElementById('copy-id-container');
 
+  if (btnCreate) btnCreate.disabled = true;
+  if (copyIdContainer) copyIdContainer.style.display = 'block';
+  if (copyIdBtn) copyIdBtn.innerText = "ID生成中...";
+  if (statusMsg) {
+    statusMsg.style.color = "#d4af37";
+    statusMsg.innerText = "通信サーバーに接続しています...";
+  }
+
+  initAudio();
+  isHost = true;
+  myRole = 'host';
+
+  if (typeof Peer === 'undefined') {
+    alert("PeerJSが読み込まれていません。ページを再読み込みしてください。");
+    if (btnCreate) btnCreate.disabled = false;
+    return;
+  }
+
+  if (peer) {
+    try { peer.destroy(); } catch(e) {}
+  }
+
+  const roomId = String(Math.floor(100000 + Math.random() * 900000));
+
+  try {
+    peer = new Peer(roomId, {
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+      }
+    });
+  } catch(err) {
+    alert("Peer作成失敗: " + err.message);
+    if (btnCreate) btnCreate.disabled = false;
+    return;
+  }
+
+  peer.on('open', id => {
+    if (copyIdBtn) copyIdBtn.innerText = `📋 ${id}`;
+    if (statusMsg) {
+      statusMsg.style.color = "#2a9d8f";
+      statusMsg.innerText = "部屋が作成されました！IDをコピーして相手に共有してください。";
+    }
+
+    if (copyIdBtn) {
+      copyIdBtn.onclick = () => {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(id).then(() => {
+            alert("部屋ID (" + id + ") をコピーしました！");
+          }).catch(() => prompt("コピー用部屋ID:", id));
+        } else {
+          prompt("コピー用部屋ID:", id);
+        }
+      };
+    }
+  });
+
+  peer.on('connection', c => {
+    conn = c;
+    setupConnection();
+  });
+
+  peer.on('error', err => {
+    console.error("Peer Error:", err);
+    if (btnCreate) btnCreate.disabled = false;
+  });
+};
+
+window.joinRoom = function() {
+  playBGM();
+  loadCustomDeck();
+  const btnJoin = document.getElementById('btn-join');
+  const joinInput = document.getElementById('join-id');
+  const statusMsg = document.getElementById('status-msg');
+
+  const hostId = joinInput ? joinInput.value.trim() : '';
+  if (!hostId) {
+    alert("相手の部屋IDを入力してください");
+    return;
+  }
+
+  if (statusMsg) {
+    statusMsg.style.color = "#d4af37";
+    statusMsg.innerText = `部屋 (${hostId}) へ接続中...`;
+  }
+
+  if (btnJoin) btnJoin.disabled = true;
+
+  initAudio();
+  isHost = false;
+  myRole = 'guest';
+
+  if (typeof Peer === 'undefined') {
+    alert("PeerJSが読み込まれていません。");
+    if (btnJoin) btnJoin.disabled = false;
+    return;
+  }
+
+  if (peer) {
+    try { peer.destroy(); } catch(e) {}
+  }
+
+  try {
+    peer = new Peer({
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+      }
+    });
+  } catch(err) {
+    alert("Peer作成失敗: " + err.message);
+    if (btnJoin) btnJoin.disabled = false;
+    return;
+  }
+
+  peer.on('open', () => {
+    conn = peer.connect(hostId);
+    setupConnection();
+  });
+
+  peer.on('error', err => {
+    console.error("Peer Error:", err);
+    if (btnJoin) btnJoin.disabled = false;
+  });
+};
+
+function setupConnection() {
+  if (!conn) return;
+
+  conn.on('open', () => {
+    const statusMsg = document.getElementById('status-msg');
+    if (statusMsg) statusMsg.innerText = "接続成功！ゲームを開始します...";
+    
+    document.getElementById('lobby').classList.add('hidden');
+    document.getElementById('game-board').classList.remove('hidden');
+
+    setTimeout(() => {
+      initFireflies();
+    }, 150);
+
+    if (isHost) {
+      G.players.host.avatar = AVATAR_PRESETS[selectedAvatarIndex].src;
+      G.players.host.biome = currentBiome;
+    } else {
+      conn.send({ 
+        type: 'SET_GUEST_INFO', 
+        avatar: AVATAR_PRESETS[selectedAvatarIndex].src,
+        biome: currentBiome,
+        deckNames: myCustomDeckNames
+      });
+    }
+  });
+
+  conn.on('data', data => handleNetworkData(data));
+  conn.on('close', () => {
+    alert("相手との接続が切断されました。");
+    location.reload();
+  });
+}
+
+function sendState() {
+  if (isVsCPU) {
+    render();
+    if (G.turn === 'guest' && !G.gameOver) {
+      scheduleCPUTurn();
+    }
+    return;
+  }
+  if (isHost) {
+    conn.send({ type: 'SYNC', state: G });
+    render();
+  }
+}
+
+function sendAction(action, payload) {
+  if (isVsCPU) {
+    processAction(myRole, action, payload);
+  } else {
+    if (isHost) {
+      processAction(myRole, action, payload);
+    } else {
+      conn.send({ type: 'ACTION', role: myRole, action, payload });
+    }
+  }
+}
+
+function handleNetworkData(data) {
+  if (data.type === 'SYNC') {
+    G = data.state;
+    if (lastRenderTurn !== G.turn && !G.gameOver) {
+      showTurnBanner(G.turn === myRole);
+      lastRenderTurn = G.turn;
+    }
+    render();
+  } else if (data.type === 'ACTION' && isHost) {
+    processAction(data.role, data.action, data.payload);
+  } else if (data.type === 'SET_GUEST_INFO' && isHost) {
+    G.players.guest.avatar = data.avatar;
+    G.players.guest.biome = data.biome;
+    initGame(data.deckNames);
+  } else if (data.type === 'COIN_FLIP') {
+    play3DCoinFlipAnimation(data.firstRole, data.secondRole);
+  } else if (data.type === 'SE') {
+    playSE(data.se);
+  } else if (data.type === 'EMOTE') {
+    showEmoteBubble('opp-emote-bubble', data.text);
+  } else if (data.type === 'TARGET_LOCK') {
+    handleRemoteTargetLock(data.attackerId, data.defenderId);
+  } else if (data.type === 'EFFECT_BUG') {
+    playAttackBugEffect(data.defenderId, data.damageText, data.isDestroyed, data.isCritical, data.element);
+  } else if (data.type === 'EFFECT_SUMMON_IMPACT') {
+    playSummonImpactByCardId(data.cardId);
+  } else if (data.type === 'EFFECT_HERO') {
+    const oppInfoBox = document.getElementById('opponent-info-box');
+    if (oppInfoBox) showDamageEffect(oppInfoBox, 'ライフ-1!');
+  } else if (data.type === 'LEAVE_GAME') {
+    alert("相手が退室しました。ロビーへ戻ります。");
+    location.reload();
+  }
+}
+
+function handleRemoteTargetLock(attackerId, defenderId) {
+  remoteLock.attackerId = attackerId;
+  remoteLock.defenderId = defenderId;
+  updateTargetArrow();
+}
+
+// --- ゲームルール進行処理 ---
+function initGame(guestDeckNames = null) {
   let hostDeck = createDeckFromNames(myCustomDeckNames, 'host');
   let guestDeck = createDeckFromNames(guestDeckNames || myCustomDeckNames, 'guest');
 
-  // テリトリー 6枚
   G.players.host.territory = hostDeck.splice(0, 6);
-  G.players.guest.territory = guestDeck.splice(0, 6);
-
-  // 初期手札 3枚セット（1ターン目にドローして4枚になります）
-  G.players.host.hand = hostDeck.splice(0, 3);
-  G.players.guest.hand = guestDeck.splice(0, 3);
-
-  // 山札 16枚
+  G.players.host.hand = hostDeck.splice(0, 4);
   G.players.host.deck = hostDeck;
-  G.players.guest.deck = guestDeck;
-
   G.players.host.field = [];
   G.players.host.mana = 0;
   G.players.host.maxMana = 0;
 
+  G.players.guest.territory = guestDeck.splice(0, 6);
+  G.players.guest.hand = guestDeck.splice(0, 4);
+  G.players.guest.deck = guestDeck;
   G.players.guest.field = [];
   G.players.guest.mana = 0;
   G.players.guest.maxMana = 0;
@@ -280,36 +484,32 @@ function initGame(guestDeckNames = null) {
   G.gameOver = false;
   G.winner = null;
   G.rematchState = { host: false, guest: false };
-  selectedHandIndex = null;
-  selectedAttackerCardId = null;
 
   const firstRole = Math.random() < 0.5 ? 'host' : 'guest';
   const secondRole = (firstRole === 'host') ? 'guest' : 'host';
 
-  // 後攻に樹液コインを追加
   G.players[secondRole].hand.push({
     ...JUETI_COIN_CARD,
     maxHp: 0,
     id: secondRole + '_jueki_coin'
   });
 
-  if (typeof conn !== 'undefined' && conn && conn.open) {
+  if (conn && conn.open) {
     conn.send({ type: 'COIN_FLIP', firstRole, secondRole });
   }
 
   play3DCoinFlipAnimation(firstRole, secondRole, () => {
-    isInitializingGame = false;
     G.turn = firstRole;
     startTurn(firstRole);
   });
 }
 
+// --- 修正後 startTurn ---
 function startTurn(role) {
   G.turn = role;
   clearTargetArrow();
   let p = G.players[role];
 
-  // ターン開始時ドロー
   if (p.deck.length > 0) {
     p.hand.push(p.deck.pop());
   }
@@ -327,8 +527,10 @@ function startTurn(role) {
 
   log(`${role === myRole ? 'あなた' : '相手'}のターン開始`);
   
+  // 状態送信と再描画
   sendState();
 
+  // 【追記】CPU対戦かつCPUのターンの場合、自動思考を開始
   if (isVsCPU && role === 'guest' && !G.gameOver) {
     scheduleCPUTurn();
   }
@@ -342,17 +544,25 @@ function processAction(role, action, payload) {
   let oppRole = role === 'host' ? 'guest' : 'host';
   let opp = G.players[oppRole];
 
-  if (action === 'PLAY_CARD') {
+  if (action === 'SET_FOOD') {
+    if (G.foodSetThisTurn) return;
+    let card = p.hand.splice(payload.handIndex, 1)[0];
+    p.food.push(card);
+    p.mana++;
+    G.foodSetThisTurn = true;
+    log(`${role === myRole ? 'あなた' : '相手'}は[${card.name}]をマナに置いた`);
+  } 
+ // --- js/api.js 内の processAction (PLAY_CARDの箇所) ---
+  else if (action === 'PLAY_CARD') {
     let card = p.hand[payload.handIndex];
-    if (!card) return;
 
     if (card.ability === 'coin') {
       p.hand.splice(payload.handIndex, 1);
       p.mana += 1;
       log(`${role === myRole ? 'あなた' : '相手'}は【樹液コイン】を使用！コスト+1！`);
     } else {
-      if (p.field.length >= 3) {
-        log("フィールドには最高3枚までしか出せません！");
+      if (p.field.length >= 5) {
+        log("フィールドには最高5枚までしか出せません！");
         return;
       }
 
@@ -363,6 +573,7 @@ function processAction(role, action, payload) {
         card.exhausted = (card.ability !== 'charge');
         p.field.push(card);
 
+        // 🌟 コスト6以上：カード位置から属性エフェクト（炎の渦/水しぶき/木葉竜巻）が噴き出す
         if (card.cost >= 6) {
           setTimeout(() => {
             playHighCostSummonEffect(card.id, card.element);
@@ -370,7 +581,9 @@ function processAction(role, action, payload) {
               conn.send({ type: 'EFFECT_HIGH_COST_SUMMON', cardId: card.id, element: card.element });
             }
           }, 80);
-        } else if (card.cost === 5) {
+        }
+        // 🌟 コスト5：通常の黄色い衝撃波演出
+        else if (card.cost === 5) {
           setTimeout(() => {
             playSummonImpactByCardId(card.id);
             if (!isVsCPU && conn && conn.open) {
@@ -394,7 +607,7 @@ function processAction(role, action, payload) {
     let defender = opp.field.find(c => c.id === payload.defenderId);
 
     let hasTaunt = opp.field.some(c => c.ability === 'taunt');
-    if (hasTaunt && defender && defender.ability !== 'taunt') {
+    if (hasTaunt && defender.ability !== 'taunt') {
       log("挑発（ガード）を持つカードを攻撃してください！");
       clearTargetArrow();
       return;

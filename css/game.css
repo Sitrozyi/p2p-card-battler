@@ -155,16 +155,16 @@
 }
 
 .field-zone {
-  min-height: 118px; /* カード拡大に合わせて少し高く */
+  min-height: 98px;
   background: rgba(0, 0, 0, 0.35);
   border: 1px dashed rgba(212, 175, 55, 0.3);
   border-radius: 8px;
   display: flex;
   align-items: center;
-  justify-content: center; /* 左寄せから中央寄せに変更 */
-  gap: 12px;               /* カード間の余白を広げて見やすく */
-  padding: 4px 8px;
-  overflow-x: hidden;      /* 横スクロール不要に */
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 2px 4px;
+  overflow-x: auto;
   position: relative;
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
@@ -617,14 +617,16 @@
 /* スマホ等レスポンシブ */
 @media (max-width: 480px) {
   :root {
-    /* 旧: 67px / 96px */
-    --card-width: 80px;
-    --card-height: 114px;
+    --card-width: 67px;
+    --card-height: 96px;
   }
-  .card-img-container { height: 46px; } /* 画像高さも少し拡大 */
-  .card-name { font-size: 0.6rem; margin-top: 2px; }
-  .card-orb { width: 22px; height: 22px; bottom: -2px; }
-  .orb-val { font-size: 0.7rem; }
+  .card-img-container { height: 38px; }
+  .card-name { font-size: 0.52rem; margin-top: 2px; }
+  .card-orb { width: 18px; height: 18px; bottom: -2px; }
+  .orb-atk { left: -2px; }
+  .orb-hp { right: -2px; }
+  .orb-val { font-size: 0.62rem; }
+  .hand-zone { min-height: 102px; padding-bottom: 14px; }
 }
 
 /* ===================================================
