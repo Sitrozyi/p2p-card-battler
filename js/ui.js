@@ -546,7 +546,7 @@ function render() {
     handEl.innerHTML = '';
     me.hand.forEach((card, idx) => {
       let cardEl = createCardEl(card, false);
-      if (isMyTurn && ((card.ability !== 'coin' && me.mana >= card.cost && me.field.length < 5) || card.ability === 'coin') && !G.gameOver) {
+       if (isMyTurn && ((card.ability !== 'coin' && me.mana >= card.cost && me.field.length < 3) || card.ability === 'coin') && !G.gameOver) {
         cardEl.classList.add('playable');
       }
       if (selectedHandIndex === idx) cardEl.classList.add('selected');
@@ -720,7 +720,7 @@ function toggleActionModal() {
   if (selectedHandIndex !== null && !G.gameOver) {
     modal.classList.remove('hidden');
     let card = G.players[myRole].hand[selectedHandIndex];
-    let isFieldFull = G.players[myRole].field.length >= 5;
+    let isFieldFull = G.players[myRole].field.length >= 3;
     document.getElementById('action-modal-card-name').innerText = `[${card.name}] の操作`;
 
     const btnFood = document.getElementById('btn-act-food');
@@ -732,7 +732,7 @@ function toggleActionModal() {
       btnPlay.innerText = "使う (コスト+1)";
     } else {
       btnPlay.disabled = (G.players[myRole].mana < card.cost) || isFieldFull;
-      btnPlay.innerText = isFieldFull ? "場に出す (上限5枚)" : "場に出す";
+      btnPlay.innerText = isFieldFull ? "場に出す (上限3枚)" : "場に出す";
     }
   } else { modal.classList.add('hidden'); }
 }

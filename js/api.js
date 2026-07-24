@@ -176,7 +176,7 @@ async function runCPUTurn() {
 
   // コストが足りる限り手札からカードを出す
   let canPlay = true;
-  while (canPlay && cpu.field.length < 5 && !G.gameOver) {
+  while (canPlay && cpu.field.length < 3 && !G.gameOver) {
     let playableIndices = [];
     cpu.hand.forEach((c, idx) => {
       if (c.cost <= cpu.mana) playableIndices.push(idx);
@@ -561,8 +561,8 @@ function processAction(role, action, payload) {
       p.mana += 1;
       log(`${role === myRole ? 'あなた' : '相手'}は【樹液コイン】を使用！コスト+1！`);
     } else {
-      if (p.field.length >= 5) {
-        log("フィールドには最高5枚までしか出せません！");
+      if (p.field.length >= 3) {
+        log("フィールドには最高3枚までしか出せません！");
         return;
       }
 
